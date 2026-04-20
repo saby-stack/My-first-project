@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motopartes RR — Inventario</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f4f4f2;color:#1a1a18;min-height:100vh;font-size:14px}
+input,select,textarea,button{font-family:inherit;font-size:inherit}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #BA751755}
+button:focus{outline:none}
+.btn{padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:opacity .15s;border:0.5px solid #d3d1c7;background:#fff;color:#444441}
+.btn:hover{opacity:.8}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#FAEEDA;border-color:#BA7517;color:#854F0B;font-weight:500}
+.btn-danger{background:#FCEBEB;border-color:#f09595;color:#A32D2D}
+.btn-info{background:#E6F1FB;border-color:#85B7EB;color:#185FA5}
+.btn-success{background:#EAF3DE;border-color:#97C459;color:#3B6D11}
+.btn-sm{padding:4px 10px;font-size:12px}
+.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;overflow:hidden}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:9px 10px;border-bottom:0.5px solid #e5e4dc;vertical-align:top}
+th{font-size:12px;color:#888780;font-weight:500;cursor:pointer;white-space:nowrap;background:#f9f9f7}
+th:hover{color:#1a1a18}
+tbody tr:hover td{background:#f4f4f2!important}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:#fff;border-radius:12px;width:90%;max-width:480px;max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.tab-btn{padding:8px 20px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#5f5e5a;border-bottom:2px solid transparent;transition:all .15s}
+.tab-btn:hover{color:#1a1a18}
+.tab-active{color:#854F0B!important;border-bottom-color:#BA7517!important;font-weight:600}
+.chip{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:500}
+label{display:block;font-size:12px;color:#5f5e5a;margin-bottom:3px;margin-top:10px}
+label:first-child{margin-top:0}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff;color:#1a1a18}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col-span-2{grid-column:1/-1}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}.col-span-2{grid-column:1}}
+@media(max-width:500px){.hide-xs{display:none!important}}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════════════
+const CATS=["Frenos","Cadenas y piñones","Filtros","Lubricantes","Eléctrico","Carrocería","Suspensión","Motor","Neumáticos","Accesorios"];
+const CAT_C={"Frenos":"#E24B4A","Cadenas y piñones":"#BA7517","Filtros":"#185FA5","Lubricantes":"#0F6E56","Eléctrico":"#7F77DD","Carrocería":"#888780","Suspensión":"#D85A30","Motor":"#993556","Neumáticos":"#1D9E75","Accesorios":"#3B6D11"};
+const LOW_DEFAULT=5;
+
+const DEFAULTS=[
+  {id:1,codigo:"7790895000719",nombre:"Pastillas de freno delantero",categoria:"Frenos",proveedor:"Brembo",precio:4500,stock:12,stockMin:3,ubicacion:"A-1",descripcion:"Honda CB125, CG150"},
+  {id:2,codigo:"7790895000726",nombre:"Disco de freno trasero 220mm",categoria:"Frenos",proveedor:"Brembo",precio:8900,stock:3,stockMin:2,ubicacion:"A-2",descripcion:"Honda Bros 160, Titan 160"},
+  {id:3,codigo:"7897753700028",nombre:"Cadena 428 × 120 eslabones",categoria:"Cadenas y piñones",proveedor:"DID",precio:3200,stock:8,stockMin:3,ubicacion:"B-1",descripcion:"Universal 125cc"},
+  {id:4,codigo:"7891010703023",nombre:"Filtro de aceite HF116",categoria:"Filtros",proveedor:"HifloFiltro",precio:1200,stock:24,stockMin:5,ubicacion:"C-2",descripcion:"Honda CG150, XR150, Pop100"},
+  {id:5,codigo:"3374650014690",nombre:"Aceite motor 4T 20W50 1L",categoria:"Lubricantes",proveedor:"Motul",precio:2800,stock:2,stockMin:3,ubicacion:"D-1",descripcion:"Universal 4 tiempos"},
+  {id:6,codigo:"4902043100822",nombre:"Bujía NGK CR7HSA",categoria:"Eléctrico",proveedor:"NGK",precio:950,stock:18,stockMin:5,ubicacion:"E-3",descripcion:"Honda 125cc / 150cc"},
+  {id:7,codigo:"0849197007316",nombre:"Amortiguador trasero 340mm",categoria:"Suspensión",proveedor:"YSS",precio:12500,stock:5,stockMin:2,ubicacion:"F-1",descripcion:"Honda CG150, Titan 150"},
+  {id:8,codigo:"7790001000041",nombre:"Espejo retrovisor universal",categoria:"Accesorios",proveedor:"Genérico",precio:1800,stock:7,stockMin:2,ubicacion:"G-2",descripcion:"Universal espejo 13cm"},
+];
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let S={
+  products:[],movements:[],history:[],
+  tab:"inventario",            // inventario | movimientos | historial
+  panel:null,                  // null | add | edit | delete | scanner
+  form:{},editId:null,deleteId:null,
+  mov:{productoId:"",tipo:"entrada",cantidad:"",nota:""},
+  search:"",filterCat:"Todas",sortField:"nombre",sortDir:"asc",
+  scanCtx:null,                // search | form-codigo | movement
+  qr:null,nextId:9,
+  highlight:null,
+};
+
+// ════════════════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════════════════
+function persist(){
+  try{
+    localStorage.setItem("mrr_p",JSON.stringify(S.products));
+    localStorage.setItem("mrr_m",JSON.stringify(S.movements));
+    localStorage.setItem("mrr_h",JSON.stringify(S.history));
+  }catch(e){}
+}
+function hydrate(){
+  try{
+    const p=localStorage.getItem("mrr_p");
+    const m=localStorage.getItem("mrr_m");
+    const h=localStorage.getItem("mrr_h");
+    S.products=p?JSON.parse(p):DEFAULTS;
+    S.movements=m?JSON.parse(m):[];
+    S.history=h?JSON.parse(h):[];
+  }catch(e){S.products=DEFAULTS;S.movements=[];S.history=[];}
+  S.nextId=S.products.length>0?Math.max(...S.products.map(x=>x.id))+1:9;
+}
+
+// ════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════
+const fmt=n=>Number(n).toLocaleString("es-AR");
+const ts=()=>new Date().toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+function logH(accion,detalle){
+  S.history.unshift({id:Date.now(),fecha:ts(),accion,detalle});
+  if(S.history.length>1000)S.history=S.history.slice(0,1000);
+}
+
+function stockBadge(n,min){
+  const threshold=min>0?min:LOW_DEFAULT;
+  const st=n===0?"danger":n<=threshold?"warning":"success";
+  const bg={danger:"#FCEBEB",warning:"#FAEEDA",success:"#EAF3DE"}[st];
+  const tc={danger:"#A32D2D",warning:"#854F0B",success:"#3B6D11"}[st];
+  return`<span style="background:${bg};color:${tc};border-radius:5px;padding:2px 9px;font-size:12px;font-weight:600">${n}</span>`;
+}
+
+function catBadge(cat){
+  const c=CAT_C[cat]||"#888";
+  return`<span style="font-size:11px;padding:2px 7px;border-radius:5px;border:0.5px solid ${c};color:${c}">${esc(cat)}</span>`;
+}
+
+function sortArrow(f){
+  if(S.sortField!==f)return`<span style="color:#ccc;margin-left:3px;font-size:10px">↕</span>`;
+  return`<span style="margin-left:3px;font-size:10px">${S.sortDir==="asc"?"↑":"↓"}</span>`;
+}
+
+function filteredProducts(){
+  let list=S.products.filter(p=>{
+    const q=S.search.toLowerCase();
+    const ms=!q||[p.nombre,p.codigo,p.proveedor,p.descripcion].join(" ").toLowerCase().includes(q);
+    const mc=S.filterCat==="Todas"||p.categoria===S.filterCat;
+    return ms&&mc;
+  });
+  const f=S.sortField,d=S.sortDir;
+  return list.sort((a,b)=>{
+    let av=a[f],bv=b[f];
+    if(typeof av==="string"){av=av.toLowerCase();bv=bv.toLowerCase();}
+    return av<bv?(d==="asc"?-1:1):av>bv?(d==="asc"?1:-1):0;
+  });
+}
+
+function getStats(){
+  const ps=S.products;
+  return{
+    skus:ps.length,
+    stock:ps.reduce((s,p)=>s+p.stock,0),
+    low:ps.filter(p=>p.stock<=(p.stockMin||LOW_DEFAULT)).length,
+    val:ps.reduce((s,p)=>s+p.precio*p.stock,0)
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+// EXPORTS
+// ════════════════════════════════════════════════════════════
+function dl(content,name,mime){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download=name;a.click();
+}
+function csvRow(arr){return arr.map(v=>`"${String(v||"").replace(/"/g,'""')}"`).join(",")}
+
+function exportInventario(){
+  const rows=[
+    csvRow(["Código","Nombre","Categoría","Proveedor","Precio","Stock","Stock Mínimo","Ubicación","Descripción"]),
+    ...S.products.map(p=>csvRow([p.codigo,p.nombre,p.categoria,p.proveedor,p.precio,p.stock,p.stockMin||0,p.ubicacion,p.descripcion]))
+  ];
+  dl("\uFEFF"+rows.join("\n"),"motopartes_rr_inventario.csv","text/csv;charset=utf-8");
+}
+
+function exportMovimientos(){
+  const rows=[
+    csvRow(["Fecha","Tipo","Código","Producto","Cant.","Stock antes","Stock después","Nota"]),
+    ...S.movements.map(m=>csvRow([m.fecha,m.tipo,m.codigo,m.nombre,m.cantidad,m.antes,m.despues,m.nota||""]))
+  ];
+  dl("\uFEFF"+rows.join("\n"),"motopartes_rr_movimientos.csv","text/csv;charset=utf-8");
+}
+
+function exportHistorial(){
+  const rows=[
+    csvRow(["Fecha y hora","Acción","Detalle"]),
+    ...S.history.map(h=>csvRow([h.fecha,h.accion,h.detalle]))
+  ];
+  dl("\uFEFF"+rows.join("\n"),"motopartes_rr_historial.csv","text/csv;charset=utf-8");
+}
+
+// ════════════════════════════════════════════════════════════
+// BARCODE SCANNER
+// ════════════════════════════════════════════════════════════
+function openScanner(ctx){
+  S.scanCtx=ctx;S.panel="scanner";
+  render();
+  setTimeout(startScanner,200);
+}
+
+function startScanner(){
+  if(!window.Html5Qrcode){
+    alert("El escáner requiere conexión a internet la primera vez para cargar la librería.");
+    S.panel=null;render();return;
+  }
+  try{
+    S.qr=new Html5Qrcode("qr-viewport");
+    S.qr.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:260,height:120}},
+      code=>{handleScanned(code);},
+      ()=>{}
+    ).catch(err=>{
+      alert("No se pudo acceder a la cámara.\n\n"+err+"\n\nPara usar el escáner en el celular, el archivo debe abrirse desde un servidor HTTP (no desde archivo local).");
+      stopScanner();
+    });
+  }catch(e){alert("Error al iniciar escáner: "+e);stopScanner();}
+}
+
+function stopScanner(){
+  if(S.qr){S.qr.stop().catch(()=>{});S.qr=null;}
+  S.panel=null;render();
+}
+
+function handleScanned(code){
+  stopScanner();
+  const ctx=S.scanCtx;
+  if(ctx==="search"){
+    const prod=S.products.find(p=>p.codigo===code);
+    if(prod){
+      S.search=code;S.tab="inventario";S.highlight=prod.id;
+      render();
+      setTimeout(()=>{S.highlight=null;render();},3500);
+    }else{
+      if(confirm(`Código "${code}" no encontrado en el inventario.\n¿Querés agregar este producto ahora?`)){
+        openAddPanel(code);
+      }
+    }
+  }else if(ctx==="form-codigo"){
+    S.form.codigo=code;render();
+    setTimeout(()=>{const el=document.getElementById("f-codigo");if(el)el.value=code;},50);
+  }else if(ctx==="movement"){
+    const prod=S.products.find(p=>p.codigo===code);
+    if(prod){S.mov.productoId=String(prod.id);render();}
+    else alert(`Código "${code}" no encontrado.\nAgregá el producto primero en el Inventario.`);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// CRUD
+// ════════════════════════════════════════════════════════════
+function openAddPanel(prefillCodigo){
+  S.form={
+    codigo:prefillCodigo||"",nombre:"",categoria:"Frenos",
+    proveedor:"",precio:"",stock:"0",stockMin:String(LOW_DEFAULT),
+    ubicacion:"",descripcion:""
+  };
+  S.panel="add";S.tab="inventario";render();
+}
+
+function openEditPanel(id){
+  const p=S.products.find(x=>x.id===id);
+  S.form={...p};S.editId=id;S.panel="edit";
+  render();setTimeout(()=>scrollTo({top:0,behavior:"smooth"}),50);
+}
+
+function openDeletePanel(id){S.deleteId=id;S.panel="delete";render();}
+
+function saveProduct(){
+  const g=id=>document.getElementById(id)?.value||"";
+  const nombre=g("f-nombre").trim();
+  const codigo=g("f-codigo").trim();
+  if(!nombre||!codigo){alert("El código y el nombre son obligatorios.");return;}
+  const dup=S.products.find(p=>p.codigo===codigo&&p.id!==S.editId);
+  if(dup){alert(`El código "${codigo}" ya está en uso por "${dup.nombre}".`);return;}
+  const prod={
+    codigo,nombre,categoria:g("f-categoria"),proveedor:g("f-proveedor").trim(),
+    precio:parseFloat(g("f-precio"))||0,stock:parseInt(g("f-stock"))||0,
+    stockMin:parseInt(g("f-stockmin"))||0,ubicacion:g("f-ubicacion").trim(),
+    descripcion:g("f-descripcion").trim()
+  };
+  if(S.panel==="add"){
+    S.products.push({...prod,id:S.nextId++});
+    logH("Producto agregado",`${prod.nombre} | Código: ${prod.codigo} | Stock: ${prod.stock} | ${prod.ubicacion}`);
+  }else{
+    const old=S.products.find(p=>p.id===S.editId);
+    S.products=S.products.map(p=>p.id===S.editId?{...prod,id:S.editId}:p);
+    const ch=[];
+    if(old.nombre!==prod.nombre)ch.push(`Nombre → "${prod.nombre}"`);
+    if(old.precio!==prod.precio)ch.push(`Precio: $${fmt(old.precio)} → $${fmt(prod.precio)}`);
+    if(old.stock!==prod.stock)ch.push(`Stock: ${old.stock} → ${prod.stock}`);
+    if(old.ubicacion!==prod.ubicacion)ch.push(`Ubicación: ${old.ubicacion} → ${prod.ubicacion}`);
+    if(ch.length)logH("Producto editado",`${prod.nombre} | ${ch.join(" | ")}`);
+  }
+  S.panel=null;persist();render();
+}
+
+function confirmDelete(){
+  const p=S.products.find(x=>x.id===S.deleteId);
+  if(p)logH("Producto eliminado",`${p.nombre} | Código: ${p.codigo}`);
+  S.products=S.products.filter(x=>x.id!==S.deleteId);
+  S.panel=null;persist();render();
+}
+
+// ════════════════════════════════════════════════════════════
+// STOCK MOVEMENTS
+// ════════════════════════════════════════════════════════════
+function openMovPanel(id){
+  S.mov={productoId:String(id),tipo:"entrada",cantidad:"",nota:""};
+  S.tab="movimientos";render();
+  setTimeout(()=>scrollTo({top:0,behavior:"smooth"}),50);
+}
+
+function registerMov(){
+  const{productoId,tipo,cantidad,nota}=S.mov;
+  if(!productoId||!cantidad){alert("Seleccioná un producto e ingresá la cantidad.");return;}
+  const prod=S.products.find(p=>p.id===parseInt(productoId));
+  if(!prod)return;
+  const cant=parseInt(cantidad);
+  if(cant<=0){alert("La cantidad debe ser mayor a 0.");return;}
+  const antes=prod.stock;
+  let despues;
+  if(tipo==="entrada")despues=antes+cant;
+  else if(tipo==="salida"){
+    if(cant>antes){alert(`Stock insuficiente. Disponible: ${antes} unidades.`);return;}
+    despues=antes-cant;
+  }else{despues=cant;} // ajuste
+  S.products=S.products.map(p=>p.id===prod.id?{...p,stock:despues}:p);
+  const mov={
+    id:Date.now(),fecha:ts(),
+    productoId:prod.id,codigo:prod.codigo,nombre:prod.nombre,
+    tipo,cantidad:tipo==="ajuste"?cant:cant,antes,despues,nota:nota||""
+  };
+  S.movements.unshift(mov);
+  const label={entrada:"↑ Entrada de stock",salida:"↓ Salida de stock",ajuste:"⇄ Ajuste de stock"}[tipo];
+  logH(label,`${prod.nombre} | ${antes} → ${despues}${nota?` | Nota: "${nota}"`:""}`)
+  S.mov={productoId:"",tipo:"entrada",cantidad:"",nota:""};
+  persist();render();
+  // flash success
+  setTimeout(()=>{
+    const el=document.getElementById("mov-success");
+    if(el){el.style.display="block";setTimeout(()=>el&&(el.style.display="none"),3000);}
+  },50);
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — HEADER
+// ════════════════════════════════════════════════════════════
+function renderHeader(){
+  const tabs=["inventario","movimientos","historial"];
+  return`
+<header style="background:#fff;border-bottom:1px solid #e5e4dc;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+  <div style="max-width:1150px;margin:0 auto;padding:.7rem 1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:160px">
+      <div style="width:38px;height:38px;border-radius:8px;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#854F0B;flex-shrink:0">RR</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;line-height:1.2">Motopartes RR</div>
+        <div style="font-size:11px;color:#888780">San Rafael, Mendoza</div>
+      </div>
+    </div>
+    <nav style="display:flex;border-bottom:2px solid #f0efe8">
+      ${tabs.map(t=>`<button class="tab-btn ${S.tab===t?"tab-active":""}" onclick="S.tab='${t}';S.panel=null;render()">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join("")}
+    </nav>
+    <button onclick="openScanner('search')" class="btn btn-info" style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:500">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v3h-3zM18 18h3v3h-3z"/></svg>
+      Escanear
+    </button>
+  </div>
+</header>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — INVENTARIO
+// ════════════════════════════════════════════════════════════
+function renderInventario(){
+  const st=getStats();
+  const fl=filteredProducts();
+  const lowProds=S.products.filter(p=>p.stock<=(p.stockMin||LOW_DEFAULT));
+  const isAdd=S.panel==="add",isEdit=S.panel==="edit";
+  const showForm=isAdd||isEdit;
+
+  const formHTML=showForm?`
+  <div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-color:${isAdd?"#97C459":"#85B7EB"}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:15px;font-weight:700">${isAdd?"➕ Nuevo producto":"✏️ Editar producto"}</div>
+      <button onclick="S.panel=null;render()" class="btn btn-sm">✕ Cancelar</button>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Código de barras (EAN-13, UPC, Code128) *</label>
+        <div style="display:flex;gap:6px">
+          <input id="f-codigo" value="${esc(S.form.codigo||"")}" placeholder="Escaneá o escribí el código real" style="flex:1;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff;font-family:monospace">
+          <button onclick="openScanner('form-codigo')" class="btn btn-sm btn-info" title="Escanear código de barras">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
+          </button>
+        </div>
+        <div style="font-size:11px;color:#888780;margin-top:3px">Este será el código que se lee con el escáner del celular</div>
+      </div>
+      <div class="field col-span-2">
+        <label>Nombre del producto *</label>
+        <input id="f-nombre" value="${esc(S.form.nombre||"")}" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <select id="f-categoria" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+          ${CATS.map(c=>`<option value="${c}"${(S.form.categoria||"Frenos")===c?" selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>Proveedor</label>
+        <input id="f-proveedor" value="${esc(S.form.proveedor||"")}" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field">
+        <label>Precio de venta (ARS $)</label>
+        <input id="f-precio" type="number" min="0" value="${S.form.precio||""}" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field">
+        <label>Stock actual</label>
+        <input id="f-stock" type="number" min="0" value="${S.form.stock||"0"}" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field">
+        <label>Stock mínimo (alerta roja)</label>
+        <input id="f-stockmin" type="number" min="0" value="${S.form.stockMin||LOW_DEFAULT}" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field">
+        <label>Ubicación en estantería (ej: A-3, Gaveta 2)</label>
+        <input id="f-ubicacion" value="${esc(S.form.ubicacion||"")}" placeholder="A-1" style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+      <div class="field col-span-2">
+        <label>Compatible con / Descripción</label>
+        <input id="f-descripcion" value="${esc(S.form.descripcion||"")}" placeholder="ej: Honda CG150, Yamaha YBR125, universal 125cc..." style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem;gap:8px">
+      <button onclick="S.panel=null;render()" class="btn">Cancelar</button>
+      <button onclick="saveProduct()" class="btn btn-primary">${isAdd?"✓ Agregar producto":"✓ Guardar cambios"}</button>
+    </div>
+  </div>`:""
+
+  const ths=[{l:"Código",f:"codigo"},{l:"Producto",f:"nombre"},{l:"Categoría",f:"categoria"},{l:"Proveedor",f:"proveedor"},{l:"Precio",f:"precio"},{l:"Stock",f:"stock"},{l:"Ubicación",f:"ubicacion"},{l:"Acciones",f:null}];
+
+  return`
+<div style="max-width:1150px;margin:0 auto;padding:1.25rem">
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem">
+    ${[
+      {l:"Productos",v:st.skus,warn:false},
+      {l:"Unidades en stock",v:fmt(st.stock),warn:false},
+      {l:"Stock bajo / agotado",v:st.low,warn:st.low>0},
+      {l:"Valor total en stock",v:"$"+fmt(Math.round(st.val)),warn:false},
+    ].map(s=>`
+    <div style="background:#fff;border:0.5px solid ${s.warn?"#EF9F27":"#d3d1c7"};border-radius:8px;padding:12px 16px">
+      <div style="font-size:12px;color:${s.warn?"#854F0B":"#888780"}">${s.l}</div>
+      <div style="font-size:22px;font-weight:700;margin-top:2px;color:${s.warn?"#A32D2D":"#1a1a18"}">${s.v}</div>
+    </div>`).join("")}
+  </div>
+
+  ${lowProds.length?`
+  <div style="background:#FAEEDA;border:0.5px solid #EF9F27;border-radius:7px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#854F0B;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-weight:700">⚠ ${lowProds.length} producto${lowProds.length>1?"s":""} requieren reposición:</span>
+    ${lowProds.slice(0,4).map(p=>`<span onclick="openMovPanel(${p.id})" style="background:#fff;border:0.5px solid #EF9F27;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer" title="Registrar entrada de stock">${esc(p.nombre)} <strong>(${p.stock})</strong></span>`).join("")}
+    ${lowProds.length>4?`<span style="font-size:12px">+${lowProds.length-4} más</span>`:""}
+  </div>`:""}
+
+  ${formHTML}
+
+  <!-- Toolbar -->
+  <div style="display:flex;gap:8px;margin-bottom:.9rem;flex-wrap:wrap;align-items:center">
+    <div style="position:relative;flex:1;min-width:180px">
+      <input type="text" placeholder="Buscar por nombre, código, proveedor..." value="${esc(S.search)}"
+        oninput="S.search=this.value;render()"
+        style="width:100%;padding:8px 12px 8px 32px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:13px;pointer-events:none">🔍</span>
+    </div>
+    <select onchange="S.filterCat=this.value;render()" style="padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+      <option value="Todas"${S.filterCat==="Todas"?" selected":""}>Todas las categorías</option>
+      ${CATS.map(c=>`<option value="${c}"${S.filterCat===c?" selected":""}>${c}</option>`).join("")}
+    </select>
+    <button onclick="exportInventario()" class="btn btn-sm hide-xs">⬇ CSV</button>
+    <button onclick="openAddPanel()" class="btn btn-primary">+ Nuevo producto</button>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            ${ths.map(th=>`<th ${th.f?`onclick="S.sortField==='${th.f}'?(S.sortDir=S.sortDir==='asc'?'desc':'asc'):(S.sortField='${th.f}',S.sortDir='asc');render()"`:""} style="${!th.f?"cursor:default":""}">
+              ${th.l}${th.f?sortArrow(th.f):""}
+            </th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${fl.length===0?`<tr><td colspan="8" style="text-align:center;padding:2.5rem;color:#888780">No se encontraron productos</td></tr>`:
+            fl.map((p,i)=>`
+            <tr id="row-${p.id}" style="${i%2===1?"background:#fafaf8":""};${S.highlight===p.id?"outline:2px solid #378add;":""};transition:outline .3s">
+              <td style="font-family:monospace;font-size:11px;color:#5f5e5a;white-space:nowrap">${esc(p.codigo)}</td>
+              <td style="min-width:160px">
+                <div style="font-weight:600;font-size:13px">${esc(p.nombre)}</div>
+                <div style="font-size:11px;color:#888780;margin-top:2px">${esc(p.descripcion||"")}</div>
+              </td>
+              <td>${catBadge(p.categoria)}</td>
+              <td style="font-size:12px;color:#5f5e5a">${esc(p.proveedor)}</td>
+              <td style="font-weight:600;white-space:nowrap">$${fmt(p.precio)}</td>
+              <td>${stockBadge(p.stock,p.stockMin||0)}</td>
+              <td style="font-family:monospace;font-size:12px;color:#5f5e5a;white-space:nowrap">${esc(p.ubicacion)}</td>
+              <td style="white-space:nowrap">
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <button onclick="openMovPanel(${p.id})" class="btn btn-sm btn-success">± Stock</button>
+                  <button onclick="openEditPanel(${p.id})" class="btn btn-sm btn-info">Editar</button>
+                  <button onclick="openDeletePanel(${p.id})" class="btn btn-sm btn-danger">✕</button>
+                </div>
+              </td>
+            </tr>`).join("")
+          }
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:8px 14px;font-size:12px;color:#888780;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:0.5px solid #e5e4dc">
+      <span>${fl.length} de ${S.products.length} productos</span>
+      <span style="color:#3B6D11">✓ Guardado automáticamente en este navegador</span>
+    </div>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — MOVIMIENTOS
+// ════════════════════════════════════════════════════════════
+function renderMovimientos(){
+  const selProd=S.products.find(p=>p.id===parseInt(S.mov.productoId));
+  const tipos={entrada:{bg:"#EAF3DE",tc:"#3B6D11",label:"↑ Entrada"},salida:{bg:"#FCEBEB",tc:"#A32D2D",label:"↓ Salida"},ajuste:{bg:"#E6F1FB",tc:"#185FA5",label:"⇄ Ajuste"}};
+
+  return`
+<div style="max-width:1150px;margin:0 auto;padding:1.25rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:1.25rem;align-items:start">
+
+    <!-- Form -->
+    <div class="card" style="padding:1.25rem">
+      <div style="font-size:15px;font-weight:700;margin-bottom:1rem">Registrar movimiento</div>
+
+      <div id="mov-success" style="display:none;background:#EAF3DE;border:0.5px solid #97C459;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#3B6D11">
+        ✓ Movimiento registrado exitosamente
+      </div>
+
+      <label style="margin-top:0">Tipo de movimiento</label>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        ${["entrada","salida","ajuste"].map(t=>`
+        <button onclick="S.mov.tipo='${t}';render()" style="flex:1;padding:7px 5px;border-radius:6px;font-size:12px;font-weight:${S.mov.tipo===t?"700":"400"};cursor:pointer;border:${S.mov.tipo===t?"1.5px":"0.5px"} solid ${tipos[t].tc};background:${S.mov.tipo===t?tipos[t].bg:"#fff"};color:${tipos[t].tc}">
+          ${tipos[t].label}
+        </button>`).join("")}
+      </div>
+
+      <label>Producto</label>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <select onchange="S.mov.productoId=this.value;render()" style="flex:1;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+          <option value="">— Seleccionar producto —</option>
+          ${S.products.map(p=>`<option value="${p.id}"${S.mov.productoId==p.id?" selected":""}>${esc(p.nombre)} (${p.stock} u.)</option>`).join("")}
+        </select>
+        <button onclick="openScanner('movement')" class="btn btn-sm btn-info" title="Escanear código de barras">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
+        </button>
+      </div>
+
+      ${selProd?`
+      <div style="background:#f4f4f2;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#5f5e5a">
+        <div><strong>${esc(selProd.nombre)}</strong></div>
+        <div>📍 ${esc(selProd.ubicacion)} &nbsp;·&nbsp; Código: <code style="font-size:11px">${esc(selProd.codigo)}</code></div>
+        <div>Stock actual: <strong style="font-size:15px">${selProd.stock}</strong> unidades</div>
+        ${selProd.stock<=(selProd.stockMin||LOW_DEFAULT)?`<div style="color:#A32D2D;margin-top:2px">⚠ Stock bajo (mín. ${selProd.stockMin||LOW_DEFAULT})</div>`:""}
+      </div>`:""}
+
+      <label>${S.mov.tipo==="ajuste"?"Nuevo stock total (reemplazo el stock actual por este valor)":"Cantidad de unidades"}</label>
+      <input type="number" min="1" value="${S.mov.cantidad||""}" oninput="S.mov.cantidad=this.value"
+        placeholder="${S.mov.tipo==="ajuste"?"ej: 15 → el stock quedará en 15":"ej: 10"}"
+        style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;margin-bottom:10px">
+
+      <label>Nota (opcional)</label>
+      <input type="text" value="${esc(S.mov.nota||"")}" oninput="S.mov.nota=this.value"
+        placeholder="ej: Compra a proveedor, venta mostrador, inventario físico..."
+        style="width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;margin-bottom:14px">
+
+      ${selProd&&S.mov.cantidad?`
+      <div style="background:${tipos[S.mov.tipo].bg};border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:${tipos[S.mov.tipo].tc};font-weight:600">
+        Vista previa: ${selProd.stock} → ${
+          S.mov.tipo==="entrada"?selProd.stock+parseInt(S.mov.cantidad||0):
+          S.mov.tipo==="salida"?selProd.stock-parseInt(S.mov.cantidad||0):
+          parseInt(S.mov.cantidad||0)
+        } unidades
+      </div>`:""}
+
+      <button onclick="registerMov()" class="btn btn-primary" style="width:100%;font-size:14px;padding:10px">
+        ${tipos[S.mov.tipo].label} Registrar
+      </button>
+    </div>
+
+    <!-- History -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+        <div style="font-size:15px;font-weight:700">Historial de movimientos</div>
+        <button onclick="exportMovimientos()" class="btn btn-sm">⬇ Exportar CSV</button>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cant.</th><th style="white-space:nowrap">Antes → Después</th><th>Nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${S.movements.length===0?`<tr><td colspan="6" style="text-align:center;padding:2rem;color:#888780">Sin movimientos registrados aún</td></tr>`:
+                S.movements.slice(0,100).map((m,i)=>{
+                  const t=tipos[m.tipo]||{bg:"#f4f4f2",tc:"#5f5e5a"};
+                  return`<tr style="${i%2===1?"background:#fafaf8":""}">
+                    <td style="font-size:11px;color:#5f5e5a;white-space:nowrap;font-family:monospace">${m.fecha}</td>
+                    <td><span style="background:${t.bg};color:${t.tc};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;white-space:nowrap">${m.tipo}</span></td>
+                    <td>
+                      <div style="font-weight:600;font-size:13px">${esc(m.nombre)}</div>
+                      <div style="font-size:10px;color:#888780;font-family:monospace">${esc(m.codigo)}</div>
+                    </td>
+                    <td style="font-size:15px;font-weight:700;color:${t.tc}">
+                      ${m.tipo==="entrada"?"+":m.tipo==="salida"?"-":"="}${m.cantidad}
+                    </td>
+                    <td style="font-size:12px;font-family:monospace;white-space:nowrap">${m.antes} → <strong>${m.despues}</strong></td>
+                    <td style="font-size:12px;color:#888780;max-width:150px">${esc(m.nota||"")}</td>
+                  </tr>`;
+                }).join("")
+              }
+            </tbody>
+          </table>
+        </div>
+        ${S.movements.length>0?`<div style="padding:8px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.movements.length} movimiento${S.movements.length!==1?"s":""} registrado${S.movements.length!==1?"s":""}</div>`:""}
+      </div>
+    </div>
+
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — HISTORIAL
+// ════════════════════════════════════════════════════════════
+function renderHistorial(){
+  const accionStyles={
+    "Producto agregado":{bg:"#EAF3DE",tc:"#3B6D11"},
+    "Producto editado":{bg:"#E6F1FB",tc:"#185FA5"},
+    "Producto eliminado":{bg:"#FCEBEB",tc:"#A32D2D"},
+    "↑ Entrada de stock":{bg:"#EAF3DE",tc:"#3B6D11"},
+    "↓ Salida de stock":{bg:"#FCEBEB",tc:"#A32D2D"},
+    "⇄ Ajuste de stock":{bg:"#E6F1FB",tc:"#185FA5"},
+  };
+  return`
+<div style="max-width:1150px;margin:0 auto;padding:1.25rem">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:18px;font-weight:700">Historial de cambios</div>
+      <div style="font-size:13px;color:#888780;margin-top:2px">Registro completo de todas las acciones en el sistema</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="exportHistorial()" class="btn btn-sm">⬇ Exportar CSV</button>
+      <button onclick="if(confirm('¿Limpiar todo el historial? Esta acción no se puede deshacer.')){S.history=[];persist();render()}" class="btn btn-sm btn-danger">🗑 Limpiar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:145px">Fecha y hora</th>
+            <th style="width:170px">Acción</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${S.history.length===0?`<tr><td colspan="3" style="text-align:center;padding:2.5rem;color:#888780">Sin cambios registrados todavía</td></tr>`:
+            S.history.map((h,i)=>{
+              const s=accionStyles[h.accion]||{bg:"#f4f4f2",tc:"#5f5e5a"};
+              return`<tr style="${i%2===1?"background:#fafaf8":""}">
+                <td style="font-size:11px;color:#5f5e5a;font-family:monospace;white-space:nowrap">${h.fecha}</td>
+                <td><span style="background:${s.bg};color:${s.tc};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">${esc(h.accion)}</span></td>
+                <td style="font-size:13px">${esc(h.detalle)}</td>
+              </tr>`;
+            }).join("")
+          }
+        </tbody>
+      </table>
+    </div>
+    ${S.history.length>0?`<div style="padding:8px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.history.length} evento${S.history.length!==1?"s":""} registrado${S.history.length!==1?"s":""}</div>`:""}
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — MODALS
+// ════════════════════════════════════════════════════════════
+function renderDeleteModal(){
+  if(S.panel!=="delete")return"";
+  const p=S.products.find(x=>x.id===S.deleteId);
+  return`
+  <div class="modal-overlay" onclick="if(event.target===this){S.panel=null;render()}">
+    <div class="modal-box" style="max-width:400px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:.5rem">Eliminar producto</div>
+      <p style="color:#5f5e5a;font-size:14px;margin-bottom:1rem">¿Estás seguro que querés eliminar <strong>"${esc(p?p.nombre:"")}"</strong>?<br>Esta acción no se puede deshacer.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="S.panel=null;render()" class="btn">Cancelar</button>
+        <button onclick="confirmDelete()" class="btn btn-danger">✕ Eliminar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderScannerModal(){
+  if(S.panel!=="scanner")return"";
+  const msgs={
+    "search":"Apuntá la cámara al código de barras del producto para buscarlo",
+    "form-codigo":"Escaneá el código de barras del producto para cargarlo automáticamente",
+    "movement":"Escaneá el código de barras para seleccionar el producto"
+  };
+  return`
+  <div class="modal-overlay">
+    <div class="modal-box" style="max-width:430px;text-align:center">
+      <div style="font-size:16px;font-weight:700;margin-bottom:.5rem">📷 Lector de código de barras</div>
+      <p style="font-size:13px;color:#5f5e5a;margin-bottom:1rem">${msgs[S.scanCtx]||"Apuntá al código"}</p>
+      <div id="qr-viewport" style="width:100%;border-radius:8px;overflow:hidden;background:#111;min-height:200px"></div>
+      <p style="font-size:11px;color:#888780;margin-top:.75rem">Compatible con EAN-13, EAN-8, UPC-A, Code128, Code39 y más</p>
+      <div style="background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-top:.75rem;font-size:12px;color:#854F0B;text-align:left">
+        💡 <strong>En el celular:</strong> el archivo debe abrirse desde un servidor HTTP (no desde archivo local) para que la cámara funcione. Podés usar <a href="https://pages.github.com" target="_blank" style="color:#185FA5">GitHub Pages</a> o enviarlo por WhatsApp Web.
+      </div>
+      <button onclick="stopScanner()" class="btn btn-danger" style="margin-top:.75rem;width:100%;padding:10px;font-size:14px">Cancelar escaneo</button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ════════════════════════════════════════════════════════════
+function render(){
+  const root=document.getElementById("root");
+  if(!root)return;
+  let content="";
+  if(S.tab==="inventario")content=renderInventario();
+  else if(S.tab==="movimientos")content=renderMovimientos();
+  else if(S.tab==="historial")content=renderHistorial();
+  root.innerHTML=renderHeader()+content+renderDeleteModal()+renderScannerModal();
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+hydrate();
+render();
+</script>
+</body>
+</html>
