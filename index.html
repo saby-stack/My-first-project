@@ -2,15 +2,71 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Motopartes RR — Sistema de Inventario</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Motopartes RR</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#f4f4f2;color:#1a1a18;min-height:100vh;font-size:14px}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f2f1ef;color:#1a1a18;font-size:14px;overflow-x:hidden}
 input,select,textarea,button{font-family:inherit;font-size:inherit}
-input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #BA751740}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #BA751750}
 button:focus{outline:none}
+
+/* ── LAYOUT ── */
+#app{display:flex;min-height:100vh}
+#sidebar{position:fixed;left:0;top:0;width:230px;height:100vh;background:#18181a;color:#e8e5df;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+#content{margin-left:230px;flex:1;min-height:100vh}
+#bottom-nav{display:none}
+
+/* ── SIDEBAR ── */
+.side-logo{padding:1.1rem 1.1rem .8rem;border-bottom:1px solid #2e2e2c;display:flex;align-items:center;gap:10px}
+.side-logo-badge{width:36px;height:36px;border-radius:8px;background:#BA7517;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+.side-logo-text{font-size:13px;font-weight:700;line-height:1.2;color:#fff}
+.side-logo-sub{font-size:10px;color:#888780;letter-spacing:.4px}
+.side-nav{padding:.5rem 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 1.1rem;cursor:pointer;font-size:13px;color:#a09d97;transition:all .15s;border-left:3px solid transparent;text-decoration:none;width:100%;background:none;border-right:none;border-top:none;border-bottom:none;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#e8e5df}
+.nav-item.active{background:rgba(186,117,23,.12);color:#f0b429;border-left-color:#BA7517;font-weight:700}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.side-footer{padding:.75rem 1.1rem;border-top:1px solid #2e2e2c;font-size:11px;color:#444441}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  #sidebar{display:none}
+  #content{margin-left:0;padding-bottom:64px}
+  #bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #e5e4dc;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+  .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font-size:9px;color:#888780;transition:color .15s;border:none;background:none;padding:0}
+  .bnav-item.active{color:#BA7517}
+  .bnav-item.active .bnav-icon{background:#FFF3D6;border-radius:12px;padding:4px 12px}
+  .bnav-icon{font-size:18px;line-height:1}
+}
+
+/* ── CARDS ── */
+.card{background:#fff;border:0.5px solid #d8d6cf;border-radius:10px;overflow:hidden}
+.kpi-card{background:#fff;border:0.5px solid #d8d6cf;border-radius:10px;padding:14px 16px}
+
+/* ── TABLES ── */
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:9px 10px;border-bottom:0.5px solid #e5e4dc;vertical-align:top}
+th{font-size:11px;color:#888780;font-weight:600;white-space:nowrap;background:#f9f9f7;text-transform:uppercase;letter-spacing:.3px;cursor:pointer}
+th.ns{cursor:default}
+th:not(.ns):hover{color:#1a1a18}
+tbody tr:hover td{background:#f8f7f5}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ── MOV CARDS (mobile) ── */
+.mov-card{border:0.5px solid #e5e4dc;border-radius:8px;padding:10px 12px;background:#fff;margin-bottom:8px}
+.desktop-tbl{display:block}
+.mobile-cards{display:none}
+@media(max-width:640px){
+  .desktop-tbl{display:none}
+  .mobile-cards{display:block}
+  .hide-mob{display:none!important}
+  .grid2{grid-template-columns:1fr!important}
+  .col2{grid-column:1!important}
+}
+
+/* ── BUTTONS ── */
 .btn{padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:opacity .15s,transform .1s;border:0.5px solid #d3d1c7;background:#fff;color:#444441}
 .btn:hover{opacity:.82}
 .btn:active{transform:scale(.97)}
@@ -19,136 +75,129 @@ button:focus{outline:none}
 .btn-info{background:#E6F1FB;border-color:#85B7EB;color:#185FA5}
 .btn-success{background:#EAF3DE;border-color:#97C459;color:#3B6D11}
 .btn-sm{padding:4px 10px;font-size:12px}
-.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;overflow:hidden}
-table{border-collapse:collapse;width:100%}
-th,td{text-align:left;padding:9px 10px;border-bottom:0.5px solid #e5e4dc;vertical-align:top}
-th{font-size:12px;color:#888780;font-weight:500;white-space:nowrap;background:#f9f9f7;cursor:pointer}
-th.no-sort{cursor:default}
-th:not(.no-sort):hover{color:#1a1a18}
-tbody tr:hover td{background:#f4f4f2}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem}
-.modal-box{background:#fff;border-radius:12px;width:96%;max-width:500px;max-height:92vh;overflow-y:auto;padding:1.5rem;box-shadow:0 24px 64px rgba(0,0,0,.22)}
-.modal-box-sm{max-width:400px}
-.tab-btn{padding:9px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#5f5e5a;border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap}
-.tab-btn:hover{color:#1a1a18}
-.tab-active{color:#854F0B!important;border-bottom-color:#BA7517!important;font-weight:700}
-label.lbl{display:block;font-size:12px;color:#5f5e5a;margin-bottom:3px;margin-top:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* ── FORMS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col2{grid-column:1/-1}
+label.lbl{display:block;font-size:12px;color:#5f5e5a;margin-bottom:3px;margin-top:11px;font-weight:500}
 label.lbl:first-child{margin-top:0}
 .finput{width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff;color:#1a1a18}
 .finput:focus{box-shadow:0 0 0 2px #BA751740}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.col2{grid-column:1/-1}
-.chip{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
-.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;border:0.5px solid;margin:1px}
-.pill-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-.pill{padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:0.5px solid #d3d1c7;background:#fff;color:#5f5e5a;transition:all .12s}
-.pill.active{background:#FAEEDA;border-color:#BA7517;color:#854F0B;font-weight:600}
-.filter-bar{background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;padding:12px 14px;margin-bottom:1rem}
-@media(max-width:700px){.grid2{grid-template-columns:1fr}.col2{grid-column:1}.hide-mob{display:none!important}}
-@media(max-width:500px){.hide-xs{display:none!important}}
+.pill{padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:0.5px solid #d3d1c7;background:#fff;color:#5f5e5a;transition:all .12s}
+.pill.active{background:#FAEEDA;border-color:#BA7517;color:#854F0B;font-weight:700}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:#fff;border-radius:12px;width:96%;max-width:500px;max-height:92vh;overflow-y:auto;padding:1.5rem;box-shadow:0 24px 64px rgba(0,0,0,.22)}
+
+/* ── DASH BARS ── */
+.bar-track{background:#f2f1ef;border-radius:4px;height:7px;overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* ── MISC ── */
+.section-title{font-size:15px;font-weight:800;margin-bottom:12px;color:#1a1a18}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.page-pad{padding:1.25rem;max-width:1180px;margin:0 auto}
+.filter-section{background:#fff;border:0.5px solid #d8d6cf;border-radius:8px;padding:12px 14px;margin-bottom:1rem}
+.tag-cil{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;border:0.5px solid;margin:1px}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:#888780}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script>
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // CONSTANTES
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 const CATS=["Frenos","Cadenas y piñones","Filtros","Lubricantes","Eléctrico","Carrocería","Suspensión","Motor","Neumáticos","Accesorios"];
 const CAT_C={"Frenos":"#E24B4A","Cadenas y piñones":"#BA7517","Filtros":"#185FA5","Lubricantes":"#0F6E56","Eléctrico":"#7F77DD","Carrocería":"#888780","Suspensión":"#D85A30","Motor":"#993556","Neumáticos":"#1D9E75","Accesorios":"#3B6D11"};
-const TIPOS_PROD=["Repuesto original","Genérico/Compatible","Aftermarket","Performance"];
-const CILINDRADAS=["110cc","125cc","150cc","200cc","250cc+","Universal"];
+const TIPOS=["Repuesto original","Genérico/Compatible","Aftermarket","Performance"];
+const CILINDS=["110cc","125cc","150cc","200cc","250cc+","Universal"];
 const CIL_C={"110cc":"#7F77DD","125cc":"#185FA5","150cc":"#0F6E56","200cc":"#D85A30","250cc+":"#993556","Universal":"#888780"};
 const LOW=5;
-const TS=()=>new Date().toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const fmt=n=>Number(n).toLocaleString("es-AR");
+const TS=()=>new Date().toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 
-// ═══════════════════════════════════════════
+const NAV=[
+  {id:"dashboard",icon:"🏠",label:"Dashboard"},
+  {id:"inventario",icon:"📦",label:"Inventario"},
+  {id:"movimientos",icon:"↕",icon2:"↕️",label:"Movimientos"},
+  {id:"historial",icon:"📋",label:"Historial"},
+  {id:"proveedores",icon:"🏪",label:"Proveedores"},
+];
+
+// ═══════════════════════════════════════════════
 // DATOS DEFAULT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 const DEF_PROV=[
   {id:1,nombre:"Brembo",contacto:"Carlos Méndez",telefono:"0261-4101234",email:"cmendez@brembo.com",notas:"Pago a 30 días"},
   {id:2,nombre:"NGK Argentina",contacto:"Distribuidora Sur",telefono:"0261-4205678",email:"ventas@ngk-ar.com",notas:""},
-  {id:3,nombre:"Motul Argentina",contacto:"Depósito central Mendoza",telefono:"0261-4309999",email:"mendoza@motul.com.ar",notas:"Entrega miércoles"},
+  {id:3,nombre:"Motul Argentina",contacto:"Depósito central",telefono:"0261-4309999",email:"mendoza@motul.com.ar",notas:"Entrega miércoles"},
   {id:4,nombre:"DID Chains",contacto:"Importadora Andina",telefono:"0261-4411111",email:"pedidos@did-ar.com",notas:""},
-  {id:5,nombre:"Genérico",contacto:"—",telefono:"—",email:"—",notas:"Productos sin marca específica"},
+  {id:5,nombre:"Genérico",contacto:"—",telefono:"—",email:"—",notas:"Sin marca específica"},
 ];
-
 const DEF_PROD=[
-  {id:1,codigo:"7790895000719",nombre:"Pastillas de freno delantero",categoria:"Frenos",tipo:"Repuesto original",proveedorId:1,precio:4500,stock:12,stockMin:3,ubicacion:"A-1",descripcion:"Honda CB125, CG150",cilindradas:["125cc","150cc"]},
-  {id:2,codigo:"7790895000726",nombre:"Disco de freno trasero 220mm",categoria:"Frenos",tipo:"Aftermarket",proveedorId:1,precio:8900,stock:3,stockMin:2,ubicacion:"A-2",descripcion:"Honda Bros 160, Titan 160",cilindradas:["150cc"]},
-  {id:3,codigo:"7897753700028",nombre:"Cadena 428 × 120 eslabones",categoria:"Cadenas y piñones",tipo:"Repuesto original",proveedorId:4,precio:3200,stock:8,stockMin:3,ubicacion:"B-1",descripcion:"Universal 125cc",cilindradas:["125cc"]},
-  {id:4,codigo:"7891010703023",nombre:"Filtro de aceite HF116",categoria:"Filtros",tipo:"Repuesto original",proveedorId:5,precio:1200,stock:24,stockMin:5,ubicacion:"C-2",descripcion:"Honda CG150, XR150, Pop100",cilindradas:["125cc","150cc"]},
+  {id:1,codigo:"7790895000719",nombre:"Pastillas freno delantero",categoria:"Frenos",tipo:"Repuesto original",proveedorId:1,precio:4500,stock:12,stockMin:3,ubicacion:"A-1",descripcion:"Honda CB125, CG150",cilindradas:["125cc","150cc"]},
+  {id:2,codigo:"7790895000726",nombre:"Disco freno trasero 220mm",categoria:"Frenos",tipo:"Aftermarket",proveedorId:1,precio:8900,stock:3,stockMin:2,ubicacion:"A-2",descripcion:"Honda Bros 160, Titan 160",cilindradas:["150cc"]},
+  {id:3,codigo:"7897753700028",nombre:"Cadena 428×120 eslabones",categoria:"Cadenas y piñones",tipo:"Repuesto original",proveedorId:4,precio:3200,stock:8,stockMin:3,ubicacion:"B-1",descripcion:"Universal 125cc",cilindradas:["125cc"]},
+  {id:4,codigo:"7891010703023",nombre:"Filtro aceite HF116",categoria:"Filtros",tipo:"Repuesto original",proveedorId:5,precio:1200,stock:24,stockMin:5,ubicacion:"C-2",descripcion:"Honda CG150, XR150",cilindradas:["125cc","150cc"]},
   {id:5,codigo:"3374650014690",nombre:"Aceite motor 4T 20W50 1L",categoria:"Lubricantes",tipo:"Repuesto original",proveedorId:3,precio:2800,stock:2,stockMin:3,ubicacion:"D-1",descripcion:"Universal 4 tiempos",cilindradas:["Universal"]},
-  {id:6,codigo:"4902043100822",nombre:"Bujía NGK CR7HSA",categoria:"Eléctrico",tipo:"Repuesto original",proveedorId:2,precio:950,stock:18,stockMin:5,ubicacion:"E-3",descripcion:"Honda 125cc / 150cc",cilindradas:["125cc","150cc"]},
+  {id:6,codigo:"4902043100822",nombre:"Bujía NGK CR7HSA",categoria:"Eléctrico",tipo:"Repuesto original",proveedorId:2,precio:950,stock:18,stockMin:5,ubicacion:"E-3",descripcion:"Honda 125cc/150cc",cilindradas:["125cc","150cc"]},
   {id:7,codigo:"0849197007316",nombre:"Amortiguador trasero 340mm",categoria:"Suspensión",tipo:"Aftermarket",proveedorId:5,precio:12500,stock:5,stockMin:2,ubicacion:"F-1",descripcion:"Honda CG150, Titan 150",cilindradas:["150cc"]},
   {id:8,codigo:"7790001000041",nombre:"Espejo retrovisor universal",categoria:"Accesorios",tipo:"Genérico/Compatible",proveedorId:5,precio:1800,stock:7,stockMin:2,ubicacion:"G-2",descripcion:"Universal",cilindradas:["Universal"]},
-  {id:9,codigo:"7790895001100",nombre:"Pastillas de freno Honda Wave 110",categoria:"Frenos",tipo:"Genérico/Compatible",proveedorId:1,precio:2800,stock:9,stockMin:3,ubicacion:"A-3",descripcion:"Honda Wave 110, Biz 110",cilindradas:["110cc"]},
-  {id:10,codigo:"7897753700110",nombre:"Cadena 420 × 116 (110cc)",categoria:"Cadenas y piñones",tipo:"Repuesto original",proveedorId:4,precio:2400,stock:6,stockMin:3,ubicacion:"B-2",descripcion:"Yamaha Crypton, Honda Biz 110",cilindradas:["110cc"]},
+  {id:9,codigo:"7790895001100",nombre:"Pastillas freno Honda Wave 110",categoria:"Frenos",tipo:"Genérico/Compatible",proveedorId:1,precio:2800,stock:9,stockMin:3,ubicacion:"A-3",descripcion:"Honda Wave 110, Biz 110",cilindradas:["110cc"]},
+  {id:10,codigo:"7897753700110",nombre:"Cadena 420×116 (110cc)",categoria:"Cadenas y piñones",tipo:"Repuesto original",proveedorId:4,precio:2400,stock:6,stockMin:3,ubicacion:"B-2",descripcion:"Yamaha Crypton, Honda Biz 110",cilindradas:["110cc"]},
 ];
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // ESTADO
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 let S={
-  tab:"inventario",
+  tab:"dashboard",
   products:[],proveedores:[],movements:[],history:[],
   nextProdId:11,nextProvId:6,
-
-  // Inventario
-  panel:null,       // null|add|edit|delete|scanner|add-prov-inline
-  form:{},editId:null,deleteId:null,
-  formCilindradas:[],
-
-  // Filtros
+  panel:null,form:{},editId:null,deleteId:null,formCil:[],
   fSearch:"",fCat:"",fTipo:"",fCil:"",fProv:"",fCodigo:"",
-
-  // Movimientos
+  sortField:"nombre",sortDir:"asc",
   mov:{productoId:"",tipo:"entrada",cantidad:"",nota:""},
-
-  // Proveedor en creación inline (desde form de producto)
-  provInlineCallback:null,
-  formProv:{},editProvId:null,deleteProvId:null,
-  panelProv:null,
-
-  // Escáner
+  panelProv:null,formProv:{},editProvId:null,
+  provInline:false,
   qr:null,scanCtx:null,
-
-  // UI
-  highlight:null,sortField:"nombre",sortDir:"asc",
+  highlight:null,
 };
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // STORAGE
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function persist(){
   try{
-    localStorage.setItem("mrr3_p",JSON.stringify(S.products));
-    localStorage.setItem("mrr3_pv",JSON.stringify(S.proveedores));
-    localStorage.setItem("mrr3_m",JSON.stringify(S.movements));
-    localStorage.setItem("mrr3_h",JSON.stringify(S.history));
+    localStorage.setItem("mrr4_p",JSON.stringify(S.products));
+    localStorage.setItem("mrr4_pv",JSON.stringify(S.proveedores));
+    localStorage.setItem("mrr4_m",JSON.stringify(S.movements));
+    localStorage.setItem("mrr4_h",JSON.stringify(S.history));
   }catch(e){}
 }
 function hydrate(){
   try{
-    S.products=JSON.parse(localStorage.getItem("mrr3_p")||"null")||DEF_PROD;
-    S.proveedores=JSON.parse(localStorage.getItem("mrr3_pv")||"null")||DEF_PROV;
-    S.movements=JSON.parse(localStorage.getItem("mrr3_m")||"[]");
-    S.history=JSON.parse(localStorage.getItem("mrr3_h")||"[]");
+    S.products=JSON.parse(localStorage.getItem("mrr4_p")||"null")||DEF_PROD;
+    S.proveedores=JSON.parse(localStorage.getItem("mrr4_pv")||"null")||DEF_PROV;
+    S.movements=JSON.parse(localStorage.getItem("mrr4_m")||"[]");
+    S.history=JSON.parse(localStorage.getItem("mrr4_h")||"[]");
     S.nextProdId=S.products.length?Math.max(...S.products.map(x=>x.id))+1:11;
     S.nextProvId=S.proveedores.length?Math.max(...S.proveedores.map(x=>x.id))+1:6;
   }catch(e){S.products=DEF_PROD;S.proveedores=DEF_PROV;S.movements=[];S.history=[];}
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // HELPERS
-// ═══════════════════════════════════════════
-const logH=(accion,detalle)=>{S.history.unshift({id:Date.now(),fecha:TS(),accion,detalle});if(S.history.length>2000)S.history=S.history.slice(0,2000);};
+// ═══════════════════════════════════════════════
+const logH=(a,d)=>{S.history.unshift({id:Date.now(),fecha:TS(),accion:a,detalle:d});if(S.history.length>2000)S.history=S.history.slice(0,2000);};
 const getProv=id=>S.proveedores.find(p=>p.id===parseInt(id));
 const getProvNombre=id=>{const p=getProv(id);return p?p.nombre:"—";};
 
-function filteredProducts(){
+function filteredProds(){
   let list=[...S.products];
   if(S.fCodigo){const q=S.fCodigo.toLowerCase();list=list.filter(p=>p.codigo.toLowerCase().includes(q));}
   if(S.fSearch){const q=S.fSearch.toLowerCase();list=list.filter(p=>[p.nombre,p.descripcion,getProvNombre(p.proveedorId)].join(" ").toLowerCase().includes(q));}
@@ -160,150 +209,119 @@ function filteredProducts(){
   return list.sort((a,b)=>{
     let av=f==="proveedor"?getProvNombre(a.proveedorId):a[f];
     let bv=f==="proveedor"?getProvNombre(b.proveedorId):b[f];
-    if(typeof av==="string"){av=av.toLowerCase();bv=bv.toLowerCase();}
+    if(typeof av==="string"){av=av.toLowerCase();bv=(bv||"").toLowerCase();}
     return av<bv?(d==="asc"?-1:1):av>bv?(d==="asc"?1:-1):0;
   });
 }
-
 function getStats(){
-  const ps=S.products;
   return{
-    skus:ps.length,
-    stock:ps.reduce((s,p)=>s+p.stock,0),
-    low:ps.filter(p=>p.stock<=(p.stockMin||LOW)).length,
-    val:ps.reduce((s,p)=>s+p.precio*p.stock,0),
+    skus:S.products.length,
+    stock:S.products.reduce((s,p)=>s+p.stock,0),
+    low:S.products.filter(p=>p.stock<=(p.stockMin||LOW)).length,
+    val:S.products.reduce((s,p)=>s+p.precio*p.stock,0),
     provs:S.proveedores.length,
   };
 }
-
 function stockBadge(n,min){
   const th=min>0?min:LOW;
-  const st=n===0?"danger":n<=th?"warning":"success";
-  const b={danger:["#FCEBEB","#A32D2D"],warning:["#FAEEDA","#854F0B"],success:["#EAF3DE","#3B6D11"]}[st];
-  return`<span style="background:${b[0]};color:${b[1]};border-radius:5px;padding:2px 8px;font-size:12px;font-weight:700">${n}</span>`;
+  const c=n===0?["#FCEBEB","#A32D2D"]:n<=th?["#FAEEDA","#854F0B"]:["#EAF3DE","#3B6D11"];
+  return`<span style="background:${c[0]};color:${c[1]};border-radius:5px;padding:2px 8px;font-size:12px;font-weight:700">${n}</span>`;
 }
-function catBadge(cat){const c=CAT_C[cat]||"#888";return`<span style="font-size:11px;padding:2px 7px;border-radius:4px;border:0.5px solid ${c};color:${c}">${esc(cat)}</span>`;}
-function cilBadge(cil){const c=CIL_C[cil]||"#888";return`<span style="font-size:11px;padding:1px 6px;border-radius:10px;background:${c}18;border:0.5px solid ${c};color:${c};font-weight:600">${cil}</span>`;}
-function tipoBadge(t){const c={["Repuesto original"]:"#3B6D11",["Genérico/Compatible"]:"#5f5e5a",["Aftermarket"]:"#185FA5",["Performance"]:"#993556"}[t]||"#888";return`<span style="font-size:11px;padding:1px 7px;border-radius:4px;background:${c}14;color:${c};border:0.5px solid ${c}22">${esc(t)}</span>`;}
+function catBadge(c){const col=CAT_C[c]||"#888";return`<span style="font-size:11px;padding:2px 7px;border-radius:4px;border:0.5px solid ${col};color:${col}">${esc(c)}</span>`;}
+function cilBadge(c){const col=CIL_C[c]||"#888";return`<span class="tag-cil" style="background:${col}18;border-color:${col};color:${col}">${c}</span>`;}
+function tipoBadge(t){const c={["Repuesto original"]:"#3B6D11",["Genérico/Compatible"]:"#5f5e5a",["Aftermarket"]:"#185FA5",["Performance"]:"#993556"}[t]||"#888";return`<span style="font-size:11px;padding:1px 7px;border-radius:4px;background:${c}14;color:${c};border:0.5px solid ${c}22">${esc(t||"")}</span>`;}
 function sortArrow(f){if(S.sortField!==f)return`<span style="color:#ccc;margin-left:2px;font-size:10px">↕</span>`;return`<span style="margin-left:2px;font-size:10px">${S.sortDir==="asc"?"↑":"↓"}</span>`;}
-
-function activeFiltersCount(){let n=0;if(S.fCodigo)n++;if(S.fSearch)n++;if(S.fCat)n++;if(S.fTipo)n++;if(S.fCil)n++;if(S.fProv)n++;return n;}
+function activeFilters(){let n=0;if(S.fCodigo)n++;if(S.fSearch)n++;if(S.fCat)n++;if(S.fTipo)n++;if(S.fCil)n++;if(S.fProv)n++;return n;}
 function clearFilters(){S.fCodigo="";S.fSearch="";S.fCat="";S.fTipo="";S.fCil="";S.fProv="";}
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // EXPORTS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function dl(content,name){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));a.download=name;a.click();}
 function csvRow(arr){return arr.map(v=>`"${String(v||"").replace(/"/g,'""')}"`).join(",");}
-function exportProd(){
-  const rows=[csvRow(["Código","Nombre","Categoría","Tipo","Proveedor","Precio","Stock","Stock Mín.","Cilindradas","Ubicación","Descripción"]),...S.products.map(p=>csvRow([p.codigo,p.nombre,p.categoria,p.tipo,getProvNombre(p.proveedorId),p.precio,p.stock,p.stockMin||0,(p.cilindradas||[]).join(";"),p.ubicacion,p.descripcion]))];
-  dl("\uFEFF"+rows.join("\n"),"motopartes_rr_inventario.csv");
-}
-function exportMov(){
-  const rows=[csvRow(["Fecha","Tipo","Código","Producto","Cant.","Antes","Después","Nota"]),...S.movements.map(m=>csvRow([m.fecha,m.tipo,m.codigo,m.nombre,m.cantidad,m.antes,m.despues,m.nota||""]))];
-  dl("\uFEFF"+rows.join("\n"),"motopartes_rr_movimientos.csv");
-}
+function exportProd(){dl("\uFEFF"+[csvRow(["Código","Nombre","Categoría","Tipo","Proveedor","Precio","Stock","StockMín","Cilindradas","Ubicación","Descripción"]),...S.products.map(p=>csvRow([p.codigo,p.nombre,p.categoria,p.tipo,getProvNombre(p.proveedorId),p.precio,p.stock,p.stockMin||0,(p.cilindradas||[]).join(";"),p.ubicacion,p.descripcion]))].join("\n"),"inventario.csv");}
+function exportMov(){dl("\uFEFF"+[csvRow(["Fecha","Tipo","Código","Producto","Cant","Antes","Después","Nota"]),...S.movements.map(m=>csvRow([m.fecha,m.tipo,m.codigo,m.nombre,m.cantidad,m.antes,m.despues,m.nota||""]))].join("\n"),"movimientos.csv");}
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // SCANNER
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function openScanner(ctx){S.scanCtx=ctx;S.panel="scanner";render();setTimeout(startScanner,200);}
-
 function startScanner(){
-  if(!window.Html5Qrcode){alert("Librería de escáner no disponible. Verificá la conexión a internet.");S.panel=null;render();return;}
+  if(!window.Html5Qrcode){alert("Librería no disponible. Verificá conexión a internet.");S.panel=null;render();return;}
   try{
-    S.qr=new Html5Qrcode("qr-viewport");
-    S.qr.start({facingMode:"environment"},{fps:10,qrbox:{width:270,height:110}},
-      code=>{handleScanned(code);},
-      ()=>{}
-    ).catch(err=>{alert("No se pudo acceder a la cámara.\n\n"+err+"\n\nNecesitás HTTPS o localhost. GitHub Pages funciona perfectamente.");stopScanner();});
-  }catch(e){alert("Error al iniciar: "+e);stopScanner();}
+    S.qr=new Html5Qrcode("qr-vp");
+    S.qr.start({facingMode:"environment"},{fps:10,qrbox:{width:260,height:110}},
+      code=>{handleScanned(code);},()=>{}
+    ).catch(err=>{alert("No se pudo acceder a la cámara.\n"+err);stopScanner();});
+  }catch(e){alert("Error: "+e);stopScanner();}
 }
-
 function stopScanner(){
   if(S.qr){S.qr.stop().catch(()=>{});S.qr=null;}
   if(S.panel==="scanner"){S.panel=null;render();}
 }
-
 function handleScanned(code){
   stopScanner();
-  const ctx=S.scanCtx;
-  if(ctx==="search"){
-    const prod=S.products.find(p=>p.codigo===code);
-    if(prod){
-      clearFilters();S.fCodigo=code;S.highlight=prod.id;S.tab="inventario";render();
-      setTimeout(()=>{S.highlight=null;render();},3500);
-    }else{
-      if(confirm(`Código "${code}" no encontrado.\n\n¿Agregar este producto al inventario?`)){
-        openAddPanel(code);
-      }
-    }
-  }else if(ctx==="form-codigo"){
-    S.form.codigo=code;render();
-    setTimeout(()=>{const el=document.getElementById("f-codigo");if(el)el.value=code;},60);
-  }else if(ctx==="movement"){
-    const prod=S.products.find(p=>p.codigo===code);
-    if(prod){S.mov.productoId=String(prod.id);render();}
-    else alert(`Código "${code}" no encontrado.\nAgregá el producto primero en Inventario.`);
+  if(S.scanCtx==="search"){
+    const p=S.products.find(x=>x.codigo===code);
+    if(p){clearFilters();S.fCodigo=code;S.highlight=p.id;S.tab="inventario";render();setTimeout(()=>{S.highlight=null;render();},3000);}
+    else if(confirm(`Código "${code}" no encontrado.\n¿Agregar este producto?`))openAddPanel(code);
+  }else if(S.scanCtx==="form-codigo"){
+    S.form.codigo=code;render();setTimeout(()=>{const el=document.getElementById("f-codigo");if(el)el.value=code;},60);
+  }else if(S.scanCtx==="movement"){
+    const p=S.products.find(x=>x.codigo===code);
+    if(p){S.mov.productoId=String(p.id);render();}
+    else alert(`Código "${code}" no encontrado.`);
   }
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // CRUD PRODUCTOS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function openAddPanel(prefill){
   S.form={codigo:prefill||"",nombre:"",categoria:"Frenos",tipo:"Repuesto original",proveedorId:"",precio:"",stock:"0",stockMin:String(LOW),ubicacion:"",descripcion:""};
-  S.formCilindradas=[];
-  S.panel="add";S.tab="inventario";
+  S.formCil=[];S.panel="add";S.tab="inventario";
   render();setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),50);
 }
-
 function openEditPanel(id){
   const p=S.products.find(x=>x.id===id);
-  S.form={...p};S.formCilindradas=[...(p.cilindradas||[])];S.editId=id;S.panel="edit";
+  S.form={...p};S.formCil=[...(p.cilindradas||[])];S.editId=id;S.panel="edit";
   render();setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),50);
 }
-
-function openDeletePanel(id){S.deleteId=id;S.panel="delete";render();}
-
-function toggleCilindrada(cil){
-  const idx=S.formCilindradas.indexOf(cil);
-  if(idx>=0)S.formCilindradas.splice(idx,1);else S.formCilindradas.push(cil);
-  const ch=document.querySelectorAll(".cil-pill");
-  ch.forEach(el=>{
-    const c=el.dataset.cil;
-    const active=S.formCilindradas.includes(c);
-    el.className="pill"+(active?" active":"");
-    el.dataset.cil=c;
+function toggleCil(c){
+  const i=S.formCil.indexOf(c);
+  if(i>=0)S.formCil.splice(i,1);else S.formCil.push(c);
+  document.querySelectorAll(".cil-p").forEach(el=>{
+    const active=S.formCil.includes(el.dataset.c);
+    el.className="pill cil-p"+(active?" active":"");
   });
 }
-
 function saveProduct(){
   const g=id=>document.getElementById(id)?.value?.trim()||"";
   const nombre=g("f-nombre"),codigo=g("f-codigo");
-  if(!nombre||!codigo){alert("El código y el nombre son obligatorios.");return;}
-  if(!S.formCilindradas.length){alert("Seleccioná al menos una cilindrada compatible.");return;}
-  const provId=parseInt(g("f-proveedorid")||S.form.proveedorId||"0");
+  if(!nombre||!codigo){alert("Código y nombre son obligatorios.");return;}
+  if(!S.formCil.length){alert("Seleccioná al menos una cilindrada.");return;}
+  const provId=parseInt(g("f-prov")||S.form.proveedorId||0);
   if(!provId){alert("Seleccioná un proveedor.");return;}
   const dup=S.products.find(p=>p.codigo===codigo&&p.id!==S.editId);
-  if(dup){alert(`El código "${codigo}" ya pertenece a "${dup.nombre}".`);return;}
-  const prod={codigo,nombre,categoria:g("f-categoria"),tipo:g("f-tipo"),proveedorId:provId,precio:parseFloat(g("f-precio"))||0,stock:parseInt(g("f-stock"))||0,stockMin:parseInt(g("f-stockmin"))||0,ubicacion:g("f-ubicacion"),descripcion:g("f-descripcion"),cilindradas:[...S.formCilindradas]};
+  if(dup){alert(`Código "${codigo}" ya usado por "${dup.nombre}".`);return;}
+  const prod={codigo,nombre,categoria:g("f-cat"),tipo:g("f-tipo"),proveedorId:provId,
+    precio:parseFloat(g("f-precio"))||0,stock:parseInt(g("f-stock"))||0,
+    stockMin:parseInt(g("f-smin"))||0,ubicacion:g("f-ubic"),descripcion:g("f-desc"),
+    cilindradas:[...S.formCil]};
   if(S.panel==="add"){
     S.products.push({...prod,id:S.nextProdId++});
     logH("Producto agregado",`${prod.nombre} | ${prod.codigo} | ${getProvNombre(provId)} | Cil: ${prod.cilindradas.join(",")} | Stock: ${prod.stock}`);
   }else{
     const old=S.products.find(p=>p.id===S.editId);const ch=[];
     if(old.nombre!==prod.nombre)ch.push(`Nombre → "${prod.nombre}"`);
-    if(old.precio!==prod.precio)ch.push(`Precio: $${fmt(old.precio)} → $${fmt(prod.precio)}`);
-    if(old.stock!==prod.stock)ch.push(`Stock: ${old.stock} → ${prod.stock}`);
-    if(old.ubicacion!==prod.ubicacion)ch.push(`Ubic: ${old.ubicacion} → ${prod.ubicacion}`);
-    if(JSON.stringify(old.cilindradas)!==JSON.stringify(prod.cilindradas))ch.push(`Cil: ${(old.cilindradas||[]).join(",") || "—"} → ${prod.cilindradas.join(",")}`);
+    if(old.precio!==prod.precio)ch.push(`Precio: $${fmt(old.precio)}→$${fmt(prod.precio)}`);
+    if(old.stock!==prod.stock)ch.push(`Stock: ${old.stock}→${prod.stock}`);
+    if(old.ubicacion!==prod.ubicacion)ch.push(`Ubic: ${old.ubicacion}→${prod.ubicacion}`);
     S.products=S.products.map(p=>p.id===S.editId?{...prod,id:S.editId}:p);
     if(ch.length)logH("Producto editado",`${prod.nombre} | ${ch.join(" | ")}`);
   }
   S.panel=null;persist();render();
 }
-
 function confirmDelete(){
   const p=S.products.find(x=>x.id===S.deleteId);
   if(p)logH("Producto eliminado",`${p.nombre} | ${p.codigo}`);
@@ -311,86 +329,59 @@ function confirmDelete(){
   S.panel=null;persist();render();
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // CRUD PROVEEDORES
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function openProvPanel(mode,id){
-  if(mode==="add"){S.formProv={nombre:"",contacto:"",telefono:"",email:"",notas:""};S.editProvId=null;}
-  else{const p=getProv(id);S.formProv={...p};S.editProvId=id;}
-  S.panelProv=mode==="add"?"add":"edit";render();
+  if(mode==="add"){S.formProv={};S.editProvId=null;}else{S.formProv={...getProv(id)};S.editProvId=id;}
+  S.panelProv=mode;render();
 }
-
-// Inline: called from product form when proveedor doesn't exist
-function openProvInline(callback){
-  S.formProv={nombre:"",contacto:"",telefono:"",email:"",notas:""};
-  S.provInlineCallback=callback;
-  S.panel="add-prov-inline";render();
+function openProvInline(){
+  S.formProv={};S.provInline=true;S.panel="prov-inline";render();
 }
-
 function saveProvInline(){
   const g=id=>document.getElementById(id)?.value?.trim()||"";
-  const nombre=g("fp-nombre");
-  if(!nombre){alert("El nombre del proveedor es obligatorio.");return;}
-  const prov={id:S.nextProvId++,nombre,contacto:g("fp-contacto"),telefono:g("fp-telefono"),email:g("fp-email"),notas:g("fp-notas")};
+  const nombre=g("fpi-nombre");if(!nombre){alert("Nombre obligatorio.");return;}
+  const prov={id:S.nextProvId++,nombre,contacto:g("fpi-contacto"),telefono:g("fpi-tel"),email:g("fpi-email"),notas:g("fpi-notas")};
   S.proveedores.push(prov);
-  logH("Proveedor creado",`${prov.nombre}${prov.telefono?" | "+prov.telefono:""}`);
+  logH("Proveedor creado",prov.nombre);
   persist();
-  // Restore product panel and auto-select new provider
-  const cb=S.provInlineCallback;
-  S.panel="add";S.provInlineCallback=null;
-  S.form.proveedorId=prov.id;
+  S.panel="add";S.provInline=false;S.form.proveedorId=prov.id;
   render();
-  // Set the select value after render
   setTimeout(()=>{
-    const sel=document.getElementById("f-proveedorid");
-    if(sel)sel.value=String(prov.id);
-    // Show confirmation
-    const msg=document.getElementById("prov-created-msg");
-    if(msg){msg.style.display="block";setTimeout(()=>{if(msg)msg.style.display="none";},4000);}
+    const sel=document.getElementById("f-prov");if(sel)sel.value=String(prov.id);
+    const msg=document.getElementById("prov-ok");if(msg){msg.style.display="block";setTimeout(()=>msg&&(msg.style.display="none"),4000);}
   },80);
 }
-
-function saveProv(fromTab){
+function saveProv(){
   const g=id=>document.getElementById(id)?.value?.trim()||"";
-  const nombre=g("fp-nombre");
-  if(!nombre){alert("El nombre es obligatorio.");return;}
-  const prov={nombre,contacto:g("fp-contacto"),telefono:g("fp-telefono"),email:g("fp-email"),notas:g("fp-notas")};
-  if(S.panelProv==="add"){
-    S.proveedores.push({...prov,id:S.nextProvId++});
-    logH("Proveedor creado",prov.nombre);
-  }else{
-    S.proveedores=S.proveedores.map(p=>p.id===S.editProvId?{...prov,id:S.editProvId}:p);
-    logH("Proveedor editado",prov.nombre);
-  }
+  const nombre=g("fp-nombre");if(!nombre){alert("Nombre obligatorio.");return;}
+  const prov={nombre,contacto:g("fp-contacto"),telefono:g("fp-tel"),email:g("fp-email"),notas:g("fp-notas")};
+  if(S.panelProv==="add"){S.proveedores.push({...prov,id:S.nextProvId++});logH("Proveedor creado",prov.nombre);}
+  else{S.proveedores=S.proveedores.map(p=>p.id===S.editProvId?{...prov,id:S.editProvId}:p);logH("Proveedor editado",prov.nombre);}
   S.panelProv=null;persist();render();
 }
-
 function deleteProv(id){
   const p=getProv(id);
-  const inUse=S.products.filter(x=>x.proveedorId===id);
-  if(inUse.length){
-    alert(`No se puede eliminar "${p.nombre}" porque está asignado a ${inUse.length} producto${inUse.length>1?"s":""}.\n\nReasignalo a otro proveedor primero.`);return;
-  }
-  if(!confirm(`¿Eliminar al proveedor "${p.nombre}"?`))return;
+  const inUse=S.products.filter(x=>x.proveedorId===id).length;
+  if(inUse){alert(`No se puede eliminar "${p.nombre}": tiene ${inUse} producto${inUse>1?"s":""} asignados. Reasignálos primero.`);return;}
+  if(!confirm(`¿Eliminar proveedor "${p.nombre}"?`))return;
   S.proveedores=S.proveedores.filter(x=>x.id!==id);
-  logH("Proveedor eliminado",p.nombre);
-  persist();render();
+  logH("Proveedor eliminado",p.nombre);persist();render();
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // MOVIMIENTOS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function openMovPanel(id){S.mov={productoId:String(id),tipo:"entrada",cantidad:"",nota:""};S.tab="movimientos";render();setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),50);}
-
 function registerMov(){
   const{productoId,tipo,cantidad,nota}=S.mov;
   if(!productoId||!cantidad){alert("Seleccioná un producto e ingresá la cantidad.");return;}
-  const prod=S.products.find(p=>p.id===parseInt(productoId));
-  if(!prod)return;
+  const prod=S.products.find(p=>p.id===parseInt(productoId));if(!prod)return;
   const cant=parseInt(cantidad);if(cant<=0){alert("Cantidad debe ser mayor a 0.");return;}
   const antes=prod.stock;
-  const despues=tipo==="entrada"?antes+cant:tipo==="salida"?(cant>antes?(alert(`Stock insuficiente. Hay ${antes} unidades.`),null):antes-cant):cant;
-  if(despues===null)return;
+  let despues=tipo==="entrada"?antes+cant:tipo==="salida"?antes-cant:cant;
+  if(tipo==="salida"&&cant>antes){alert(`Stock insuficiente. Hay ${antes} unidades.`);return;}
   S.products=S.products.map(p=>p.id===prod.id?{...p,stock:despues}:p);
   S.movements.unshift({id:Date.now(),fecha:TS(),productoId:prod.id,codigo:prod.codigo,nombre:prod.nombre,tipo,cantidad:cant,antes,despues,nota:nota||""});
   const lbl={entrada:"↑ Entrada de stock",salida:"↓ Salida de stock",ajuste:"⇄ Ajuste de stock"}[tipo];
@@ -400,479 +391,663 @@ function registerMov(){
   setTimeout(()=>{const el=document.getElementById("mov-ok");if(el){el.style.display="block";setTimeout(()=>el&&(el.style.display="none"),3000);}},60);
 }
 
-// ═══════════════════════════════════════════
-// RENDER — HEADER
-// ═══════════════════════════════════════════
-function renderHeader(){
-  return`
-<header style="background:#fff;border-bottom:1px solid #e5e4dc;position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.06)">
-  <div style="max-width:1200px;margin:0 auto;padding:.65rem 1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:9px;flex:1;min-width:120px">
-      <div style="width:36px;height:36px;border-radius:8px;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#854F0B;flex-shrink:0;letter-spacing:.5px">RR</div>
+// ═══════════════════════════════════════════════
+// DASHBOARD DATA
+// ═══════════════════════════════════════════════
+function dashData(){
+  const salidas=S.movements.filter(m=>m.tipo==="salida");
+  const entradas=S.movements.filter(m=>m.tipo==="entrada");
+
+  // Top productos por unidades salidas
+  const byProd={};
+  salidas.forEach(m=>{byProd[m.productoId]=(byProd[m.productoId]||0)+m.cantidad;});
+  const topProds=Object.entries(byProd).sort((a,b)=>b[1]-a[1]).slice(0,6)
+    .map(([id,qty])=>({prod:S.products.find(p=>p.id==id),qty})).filter(x=>x.prod);
+
+  // Cilindradas más demandadas
+  const byCil={};
+  salidas.forEach(m=>{
+    const p=S.products.find(x=>x.id===m.productoId);
+    if(p)(p.cilindradas||[]).forEach(c=>{byCil[c]=(byCil[c]||0)+m.cantidad;});
+  });
+
+  // Stock por categoría (valor $)
+  const byCatVal={};
+  S.products.forEach(p=>{byCatVal[p.categoria]=(byCatVal[p.categoria]||0)+p.stock*p.precio;});
+
+  // Stock por categoría (unidades)
+  const byCatUnits={};
+  S.products.forEach(p=>{byCatUnits[p.categoria]=(byCatUnits[p.categoria]||0)+p.stock;});
+
+  // Movimientos por mes (últimos 6 meses aproximado — por posición)
+  const movByType={entrada:entradas.length,salida:salidas.length,ajuste:S.movements.filter(m=>m.tipo==="ajuste").length};
+
+  // Alertas
+  const alerts=S.products.filter(p=>p.stock<=(p.stockMin||LOW));
+
+  // Proveedor más activo (por entradas)
+  const byProv={};
+  entradas.forEach(m=>{
+    const p=S.products.find(x=>x.id===m.productoId);
+    if(p){const pn=getProvNombre(p.proveedorId);byProv[pn]=(byProv[pn]||0)+m.cantidad;}
+  });
+  const topProvs=Object.entries(byProv).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // Tipo de producto más vendido
+  const byTipo={};
+  salidas.forEach(m=>{
+    const p=S.products.find(x=>x.id===m.productoId);
+    if(p){byTipo[p.tipo||"?"]=(byTipo[p.tipo||"?"]||0)+m.cantidad;}
+  });
+
+  return{topProds,byCil,byCatVal,byCatUnits,movByType,alerts,topProvs,byTipo,
+    totalSalidas:salidas.reduce((s,m)=>s+m.cantidad,0),
+    totalEntradas:entradas.reduce((s,m)=>s+m.cantidad,0),
+    totalVal:S.products.reduce((s,p)=>s+p.stock*p.precio,0),
+  };
+}
+
+function barH(label,val,max,color,suffix){
+  const pct=max>0?Math.round(val/max*100):0;
+  return`<div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+      <span style="font-size:13px;color:#1a1a18;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">${esc(label)}</span>
+      <span style="font-size:13px;font-weight:700;color:${color};flex-shrink:0">${typeof val==="number"&&suffix==="$"?"$"+fmt(Math.round(val)):fmt(val)+(suffix&&suffix!=="$"?" "+suffix:"")}</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" style="background:${color};width:${pct}%"></div></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — SIDEBAR
+// ═══════════════════════════════════════════════
+function renderSidebar(){
+  return`<div id="sidebar">
+    <div class="side-logo">
+      <div class="side-logo-badge">RR</div>
       <div>
-        <div style="font-size:15px;font-weight:800;line-height:1.1">Motopartes RR</div>
-        <div style="font-size:10px;color:#888780;letter-spacing:.3px">SAN RAFAEL · MENDOZA</div>
+        <div class="side-logo-text">Motopartes RR</div>
+        <div class="side-logo-sub">SAN RAFAEL · MENDOZA</div>
       </div>
     </div>
-    <nav style="display:flex;gap:0;overflow-x:auto">
-      ${["inventario","movimientos","historial","proveedores"].map(t=>`
-      <button onclick="S.tab='${t}';S.panel=null;S.panelProv=null;render()" class="tab-btn ${S.tab===t?"tab-active":""}">
-        ${{inventario:"📦",movimientos:"↕️",historial:"📋",proveedores:"🏪"}[t]} ${t.charAt(0).toUpperCase()+t.slice(1)}
+    <nav class="side-nav">
+      ${NAV.map(n=>`<button class="nav-item${S.tab===n.id?" active":""}" onclick="S.tab='${n.id}';S.panel=null;S.panelProv=null;render()">
+        <span class="nav-icon">${n.icon}</span>
+        <span>${n.label}</span>
+        ${n.id==="inventario"&&S.products.filter(p=>p.stock<=(p.stockMin||LOW)).length?`<span style="margin-left:auto;background:#E24B4A;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700">${S.products.filter(p=>p.stock<=(p.stockMin||LOW)).length}</span>`:""}
       </button>`).join("")}
     </nav>
-    <button onclick="openScanner('search')" class="btn btn-info" style="display:flex;align-items:center;gap:5px;font-weight:600;white-space:nowrap">
+    <button onclick="openScanner('search')" style="margin:0 .75rem .75rem;padding:9px 12px;border-radius:7px;background:#BA7517;border:none;color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px;width:calc(100% - 1.5rem)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
+      Escanear producto
+    </button>
+    <div class="side-footer">v4.0 · Inventario activo</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — BOTTOM NAV (mobile)
+// ═══════════════════════════════════════════════
+function renderBottomNav(){
+  return`<nav id="bottom-nav">
+    ${NAV.map(n=>`<button class="bnav-item${S.tab===n.id?" active":""}" onclick="S.tab='${n.id}';S.panel=null;S.panelProv=null;render()">
+      <span class="bnav-icon">${n.icon}</span>
+      <span>${n.label}</span>
+    </button>`).join("")}
+  </nav>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDashboard(){
+  const d=dashData(),st=getStats();
+  const noMovs=S.movements.length===0;
+
+  const kpis=[
+    {l:"Valor en stock",v:"$"+fmt(Math.round(d.totalVal)),sub:"capital inmovilizado",c:"#854F0B",bg:"#FAEEDA"},
+    {l:"Productos",v:st.skus,sub:`${st.stock} unidades totales`,c:"#185FA5",bg:"#E6F1FB"},
+    {l:"Stock bajo / agotado",v:st.low,sub:st.low>0?"Requieren reposición":"Todo en orden ✓",c:st.low>0?"#A32D2D":"#3B6D11",bg:st.low>0?"#FCEBEB":"#EAF3DE"},
+    {l:"Movimientos",v:S.movements.length,sub:`${d.totalSalidas} salidas · ${d.totalEntradas} entradas`,c:"#0F6E56",bg:"#EAF3DE"},
+  ];
+
+  const maxCilVal=Math.max(1,...Object.values(d.byCil));
+  const maxCatVal=Math.max(1,...Object.values(d.byCatVal));
+  const maxProdQty=d.topProds.length?d.topProds[0].qty:1;
+
+  return`<div class="page-pad">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:20px;font-weight:800">Buenos días 👋</div>
+      <div style="font-size:13px;color:#888780;margin-top:2px">Resumen del inventario — ${new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})}</div>
+    </div>
+    <button onclick="openScanner('search')" class="btn btn-primary hide-mob" style="display:flex;align-items:center;gap:6px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
       Escanear
     </button>
   </div>
-</header>`;
-}
-
-// ═══════════════════════════════════════════
-// RENDER — FILTROS
-// ═══════════════════════════════════════════
-function renderFiltros(){
-  const active=activeFiltersCount();
-  return`
-<div class="filter-bar">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-    <span style="font-size:12px;font-weight:700;color:#5f5e5a">FILTROS</span>
-    ${active?`<span style="background:#FAEEDA;color:#854F0B;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">${active} activo${active>1?"s":""}</span>
-    <button onclick="clearFilters();render()" class="btn btn-sm" style="font-size:11px">✕ Limpiar</button>`:""}
-    <button onclick="exportProd()" class="btn btn-sm hide-mob" style="margin-left:auto">⬇ CSV</button>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
-    <div style="position:relative">
-      <input type="text" placeholder="🔍 Nombre / descripción" value="${esc(S.fSearch)}" oninput="S.fSearch=this.value;render()" style="width:100%;padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px">
-    </div>
-    <div style="position:relative">
-      <input type="text" placeholder="# Código de barras" value="${esc(S.fCodigo)}" oninput="S.fCodigo=this.value;render()" style="width:100%;padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;font-family:monospace">
-    </div>
-    <select onchange="S.fCat=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
-      <option value="">Todas las categorías</option>
-      ${CATS.map(c=>`<option value="${c}"${S.fCat===c?" selected":""}>${c}</option>`).join("")}
-    </select>
-    <select onchange="S.fTipo=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
-      <option value="">Todos los tipos</option>
-      ${TIPOS_PROD.map(t=>`<option value="${t}"${S.fTipo===t?" selected":""}>${t}</option>`).join("")}
-    </select>
-    <select onchange="S.fCil=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
-      <option value="">Todas las cilindradas</option>
-      ${CILINDRADAS.map(c=>`<option value="${c}"${S.fCil===c?" selected":""}>${c}</option>`).join("")}
-    </select>
-    <select onchange="S.fProv=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
-      <option value="">Todos los proveedores</option>
-      ${S.proveedores.map(p=>`<option value="${p.id}"${S.fProv==p.id?" selected":""}>${esc(p.nombre)}</option>`).join("")}
-    </select>
-  </div>
-</div>`;
-}
-
-// ═══════════════════════════════════════════
-// RENDER — FORM PRODUCTO
-// ═══════════════════════════════════════════
-function renderProductForm(){
-  const isAdd=S.panel==="add";
-  return`
-<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-color:${isAdd?"#97C459":"#85B7EB"}">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-    <div style="font-size:15px;font-weight:800">${isAdd?"➕ Nuevo producto":"✏️ Editar producto"}</div>
-    <button onclick="S.panel=null;render()" class="btn btn-sm">✕ Cancelar</button>
-  </div>
-
-  <div id="prov-created-msg" style="display:none;background:#EAF3DE;border:0.5px solid #97C459;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#3B6D11;font-weight:600">
-    ✓ Proveedor creado y seleccionado exitosamente
-  </div>
-
-  <div class="grid2">
-    <div class="col2">
-      <label class="lbl">Código de barras (EAN-13, UPC, Code128) *</label>
-      <div style="display:flex;gap:6px">
-        <input id="f-codigo" value="${esc(S.form.codigo||"")}" placeholder="Escaneá o escribí el código real del producto" class="finput" style="flex:1;font-family:monospace">
-        <button onclick="openScanner('form-codigo')" class="btn btn-sm btn-info" title="Escanear">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
-        </button>
-      </div>
-      <div style="font-size:11px;color:#888780;margin-top:2px">Este es el código real que se lee con el escáner del celular</div>
-    </div>
-
-    <div class="col2">
-      <label class="lbl">Nombre del producto *</label>
-      <input id="f-nombre" value="${esc(S.form.nombre||"")}" class="finput">
-    </div>
-
-    <div>
-      <label class="lbl">Categoría</label>
-      <select id="f-categoria" class="finput">
-        ${CATS.map(c=>`<option value="${c}"${(S.form.categoria||"Frenos")===c?" selected":""}>${c}</option>`).join("")}
-      </select>
-    </div>
-
-    <div>
-      <label class="lbl">Tipo de producto</label>
-      <select id="f-tipo" class="finput">
-        ${TIPOS_PROD.map(t=>`<option value="${t}"${(S.form.tipo||"Repuesto original")===t?" selected":""}>${t}</option>`).join("")}
-      </select>
-    </div>
-
-    <div class="col2">
-      <label class="lbl">Proveedor *</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <select id="f-proveedorid" class="finput" style="flex:1">
-          <option value="">— Seleccionar proveedor —</option>
-          ${S.proveedores.map(p=>`<option value="${p.id}"${(S.form.proveedorId&&String(S.form.proveedorId)===String(p.id))?" selected":""}>${esc(p.nombre)}${p.contacto&&p.contacto!=="—"?" · "+esc(p.contacto):""}</option>`).join("")}
-        </select>
-        <button onclick="openProvInline()" class="btn btn-sm btn-success" title="Crear nuevo proveedor sin salir de aquí" style="white-space:nowrap">
-          ➕ Nuevo proveedor
-        </button>
-      </div>
-      <div style="font-size:11px;color:#888780;margin-top:2px">Si el proveedor no está en la lista, hacé clic en "Nuevo proveedor" →</div>
-    </div>
-
-    <div class="col2">
-      <label class="lbl">Cilindradas compatibles * <span style="color:#888780;font-weight:400">(seleccioná todas las que apliquen)</span></label>
-      <div class="pill-group" id="cil-group">
-        ${CILINDRADAS.map(c=>`<button class="pill cil-pill ${(S.formCilindradas.includes(c))?"active":""}" data-cil="${c}" onclick="toggleCilindrada('${c}')">${c}</button>`).join("")}
-      </div>
-      ${!S.formCilindradas.length?`<div style="font-size:11px;color:#A32D2D;margin-top:4px">⚠ Seleccioná al menos una cilindrada</div>`:""}
-    </div>
-
-    <div>
-      <label class="lbl">Precio de venta (ARS $)</label>
-      <input id="f-precio" type="number" min="0" value="${S.form.precio||""}" class="finput">
-    </div>
-
-    <div>
-      <label class="lbl">Stock actual</label>
-      <input id="f-stock" type="number" min="0" value="${S.form.stock||"0"}" class="finput">
-    </div>
-
-    <div>
-      <label class="lbl">Stock mínimo (alerta)</label>
-      <input id="f-stockmin" type="number" min="0" value="${S.form.stockMin||LOW}" class="finput">
-    </div>
-
-    <div>
-      <label class="lbl">Ubicación en estantería</label>
-      <input id="f-ubicacion" value="${esc(S.form.ubicacion||"")}" placeholder="ej: A-1, Gaveta 3, Depósito B" class="finput">
-    </div>
-
-    <div class="col2">
-      <label class="lbl">Compatible con / Descripción</label>
-      <input id="f-descripcion" value="${esc(S.form.descripcion||"")}" placeholder="ej: Honda CG150, Yamaha YBR125, universal 4T..." class="finput">
-    </div>
-  </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;gap:8px">
-    <button onclick="S.panel=null;render()" class="btn">Cancelar</button>
-    <button onclick="saveProduct()" class="btn btn-primary" style="font-size:14px;padding:9px 22px">${isAdd?"✓ Agregar producto":"✓ Guardar cambios"}</button>
-  </div>
-</div>`;
-}
-
-// ═══════════════════════════════════════════
-// RENDER — INVENTARIO TAB
-// ═══════════════════════════════════════════
-function renderInventario(){
-  const st=getStats();
-  const fl=filteredProducts();
-  const lowProds=S.products.filter(p=>p.stock<=(p.stockMin||LOW));
-  const showForm=S.panel==="add"||S.panel==="edit";
-
-  const ths=[{l:"Código",f:"codigo"},{l:"Producto",f:"nombre"},{l:"Categoría",f:"categoria"},{l:"Tipo",f:"tipo"},{l:"Cilindradas",f:null},{l:"Proveedor",f:"proveedor"},{l:"Precio",f:"precio"},{l:"Stock",f:"stock"},{l:"Ubicación",f:"ubicacion"},{l:"Acciones",f:null}];
-
-  return`
-<div style="max-width:1200px;margin:0 auto;padding:1.25rem">
 
   <!-- KPIs -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem">
-    ${[
-      {l:"Productos",v:st.skus,warn:false},
-      {l:"Unidades totales",v:fmt(st.stock),warn:false},
-      {l:"Stock bajo/agotado",v:st.low,warn:st.low>0},
-      {l:"Valor en stock",v:"$"+fmt(Math.round(st.val)),warn:false},
-      {l:"Proveedores",v:st.provs,warn:false},
-    ].map(s=>`<div style="background:#fff;border:0.5px solid ${s.warn?"#EF9F27":"#d3d1c7"};border-radius:8px;padding:11px 14px">
-      <div style="font-size:11px;color:${s.warn?"#854F0B":"#888780"};text-transform:uppercase;letter-spacing:.3px">${s.l}</div>
-      <div style="font-size:22px;font-weight:800;margin-top:3px;color:${s.warn?"#A32D2D":"#1a1a18"}">${s.v}</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem">
+    ${kpis.map(k=>`<div class="kpi-card" style="border-color:${k.bg}">
+      <div style="font-size:11px;color:#888780;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">${k.l}</div>
+      <div style="font-size:24px;font-weight:800;color:${k.c}">${k.v}</div>
+      <div style="font-size:12px;color:#888780;margin-top:2px">${k.sub}</div>
     </div>`).join("")}
   </div>
 
-  ${lowProds.length?`
-  <div style="background:#FAEEDA;border:0.5px solid #EF9F27;border-radius:7px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#854F0B;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span style="font-weight:700">⚠ Reposición urgente:</span>
-    ${lowProds.slice(0,5).map(p=>`<span onclick="openMovPanel(${p.id})" style="background:#fff;border:0.5px solid #EF9F27;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer">${esc(p.nombre)} <strong>(${p.stock})</strong></span>`).join("")}
-    ${lowProds.length>5?`<span style="font-size:12px">y ${lowProds.length-5} más</span>`:""}
+  ${d.alerts.length?`
+  <div style="background:#FCEBEB;border:0.5px solid #f09595;border-radius:8px;padding:12px 16px;margin-bottom:1.25rem">
+    <div style="font-weight:700;font-size:13px;color:#A32D2D;margin-bottom:8px">⚠ ${d.alerts.length} producto${d.alerts.length>1?"s":""} requieren reposición urgente</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${d.alerts.map(p=>`<div onclick="openMovPanel(${p.id})" style="background:#fff;border:0.5px solid #f09595;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">
+        <span style="font-weight:600">${esc(p.nombre.length>22?p.nombre.slice(0,21)+"…":p.nombre)}</span>
+        <span style="color:#A32D2D;font-weight:700"> (${p.stock} u.)</span>
+      </div>`).join("")}
+    </div>
   </div>`:""}
 
-  ${showForm?renderProductForm():""}
+  <!-- Charts grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem">
 
-  ${!showForm?`
-  <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
-    <button onclick="openAddPanel()" class="btn btn-primary">+ Nuevo producto</button>
-  </div>`:""}
-
-  ${renderFiltros()}
-
-  <!-- Tabla -->
-  <div class="card">
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            ${ths.map(th=>`<th class="${th.f?"":"no-sort"}" ${th.f?`onclick="S.sortField==='${th.f}'?(S.sortDir=S.sortDir==='asc'?'desc':'asc'):(S.sortField='${th.f}',S.sortDir='asc');render()"`:""}>
-              ${th.l}${th.f?sortArrow(th.f):""}
-            </th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          ${fl.length===0?`<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:#888780">No se encontraron productos con los filtros actuales</td></tr>`:
-            fl.map((p,i)=>`
-            <tr id="row-${p.id}" style="${i%2===1?"background:#fafaf8":""};${S.highlight===p.id?"outline:2.5px solid #378add;background:#E6F1FB!important":""};transition:background .3s">
-              <td style="font-family:monospace;font-size:11px;color:#5f5e5a;white-space:nowrap">${esc(p.codigo)}</td>
-              <td style="min-width:160px">
-                <div style="font-weight:700;font-size:13px">${esc(p.nombre)}</div>
-                <div style="font-size:11px;color:#888780;margin-top:1px">${esc(p.descripcion||"")}</div>
-              </td>
-              <td>${catBadge(p.categoria)}</td>
-              <td>${tipoBadge(p.tipo||"")}</td>
-              <td style="min-width:120px"><div style="display:flex;flex-wrap:wrap;gap:2px">${(p.cilindradas||[]).map(cilBadge).join("")}</div></td>
-              <td style="font-size:12px;color:#5f5e5a;white-space:nowrap">${esc(getProvNombre(p.proveedorId))}</td>
-              <td style="font-weight:700;white-space:nowrap">$${fmt(p.precio)}</td>
-              <td>${stockBadge(p.stock,p.stockMin||0)}</td>
-              <td style="font-family:monospace;font-size:11px;color:#5f5e5a;white-space:nowrap">${esc(p.ubicacion)}</td>
-              <td style="white-space:nowrap">
-                <div style="display:flex;gap:4px">
-                  <button onclick="openMovPanel(${p.id})" class="btn btn-sm btn-success">±</button>
-                  <button onclick="openEditPanel(${p.id})" class="btn btn-sm btn-info">Editar</button>
-                  <button onclick="openDeletePanel(${p.id})" class="btn btn-sm btn-danger">✕</button>
-                </div>
-              </td>
-            </tr>`).join("")
-          }
-        </tbody>
-      </table>
+    <!-- Top productos -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">🔥 Productos más salidos</div>
+      ${noMovs||!d.topProds.length?`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">📊</div><div>Registrá movimientos de <strong>salida</strong> para ver qué productos se venden más.</div></div>`:
+        d.topProds.map(x=>barH(x.prod.nombre,x.qty,maxProdQty,CAT_C[x.prod.categoria]||"#888","u.")).join("")
+      }
     </div>
-    <div style="padding:8px 14px;font-size:12px;color:#888780;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:0.5px solid #e5e4dc">
-      <span>${fl.length} de ${S.products.length} productos</span>
-      <span style="color:#3B6D11">✓ Guardado automáticamente</span>
+
+    <!-- Cilindradas -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">🏍️ Motos más activas por cilindrada</div>
+      ${noMovs||!Object.keys(d.byCil).length?`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">🏍️</div><div>Registrá movimientos de salida para ver qué cilindrada es más popular.</div></div>`:
+        Object.entries(d.byCil).sort((a,b)=>b[1]-a[1]).map(([c,v])=>barH(c,v,maxCilVal,CIL_C[c]||"#888","u.")).join("")
+      }
+      ${noMovs?"":Object.keys(d.byCil).length?`<div style="margin-top:10px;font-size:12px;color:#888780">💡 La cilindrada más popular te dice qué stock priorizar.</div>`:""}
     </div>
+
+    <!-- Valor por categoría -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">💰 Valor de stock por categoría</div>
+      ${Object.entries(d.byCatVal).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([c,v])=>barH(c,v,maxCatVal,CAT_C[c]||"#888","$")).join("")}
+      <div style="margin-top:10px;font-size:12px;color:#888780">💡 Las categorías con mayor valor tienen más capital inmovilizado.</div>
+    </div>
+
+    <!-- Tipo de producto más demandado -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">📦 Demanda por tipo de producto</div>
+      ${noMovs||!Object.keys(d.byTipo).length?`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">📦</div><div>Sin datos de salidas aún. Acá verás si se venden más originales o genéricos.</div></div>`:
+        Object.entries(d.byTipo).sort((a,b)=>b[1]-a[1]).map(([t,v])=>{const max=Math.max(...Object.values(d.byTipo));return barH(t,v,max,{"Repuesto original":"#3B6D11","Genérico/Compatible":"#5f5e5a","Aftermarket":"#185FA5","Performance":"#993556"}[t]||"#888","u.");}).join("")
+      }
+      ${!noMovs&&Object.keys(d.byTipo).length?`<div style="margin-top:10px;font-size:12px;color:#888780">💡 Si se venden más genéricos que originales, podés ampliar esa línea.</div>`:""}
+    </div>
+
+    <!-- Proveedores activos -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">🏪 Proveedores por entradas recibidas</div>
+      ${d.topProvs.length===0?`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">🏪</div><div>Registrá entradas de stock para ver cuál proveedor te abastece más.</div></div>`:
+        d.topProvs.map(([p,v])=>{const max=Math.max(...d.topProvs.map(x=>x[1]));return barH(p,v,max,"#BA7517","u.");}).join("")
+      }
+    </div>
+
+    <!-- Resumen movimientos -->
+    <div class="card" style="padding:1.1rem">
+      <div class="section-title">📋 Últimos movimientos</div>
+      ${S.movements.length===0?`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px">↕️</div><div>Sin movimientos registrados todavía.</div></div>`:
+        S.movements.slice(0,6).map(m=>{
+          const c=m.tipo==="entrada"?["#EAF3DE","#3B6D11","+"]:m.tipo==="salida"?["#FCEBEB","#A32D2D","-"]:["#E6F1FB","#185FA5","="];
+          return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid #f2f1ef">
+            <span style="background:${c[0]};color:${c[1]};border-radius:5px;padding:2px 8px;font-size:12px;font-weight:700;flex-shrink:0;min-width:32px;text-align:center">${c[2]}${m.cantidad}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.nombre)}</div>
+              <div style="font-size:11px;color:#888780">${m.fecha}</div>
+            </div>
+            <span style="font-size:11px;color:#888780;flex-shrink:0">${m.antes}→<strong>${m.despues}</strong></span>
+          </div>`;
+        }).join("")
+      }
+      ${S.movements.length>0?`<button onclick="S.tab='movimientos';render()" class="btn btn-sm" style="margin-top:10px;width:100%">Ver todos los movimientos →</button>`:""}
+    </div>
+
   </div>
 </div>`;
 }
 
-// ═══════════════════════════════════════════
-// RENDER — MOVIMIENTOS TAB
-// ═══════════════════════════════════════════
-function renderMovimientos(){
-  const selProd=S.products.find(p=>p.id===parseInt(S.mov.productoId));
-  const TC={"entrada":["#EAF3DE","#3B6D11","↑ Entrada"],"salida":["#FCEBEB","#A32D2D","↓ Salida"],"ajuste":["#E6F1FB","#185FA5","⇄ Ajuste"]};
-  return`
-<div style="max-width:1200px;margin:0 auto;padding:1.25rem">
-  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:1.25rem;align-items:start">
-    <div class="card" style="padding:1.25rem">
-      <div style="font-size:15px;font-weight:800;margin-bottom:1rem">Registrar movimiento</div>
-      <div id="mov-ok" style="display:none;background:#EAF3DE;border:0.5px solid #97C459;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#3B6D11;font-weight:600">✓ Movimiento registrado</div>
-      <div style="display:flex;gap:6px;margin-bottom:12px">
-        ${["entrada","salida","ajuste"].map(t=>`<button onclick="S.mov.tipo='${t}';render()" style="flex:1;padding:7px 4px;border-radius:6px;font-size:12px;font-weight:${S.mov.tipo===t?"700":"400"};cursor:pointer;border:${S.mov.tipo===t?"2px":"0.5px"} solid ${TC[t][1]};background:${S.mov.tipo===t?TC[t][0]:"#fff"};color:${TC[t][1]}">${TC[t][2]}</button>`).join("")}
+// ═══════════════════════════════════════════════
+// RENDER — FILTROS
+// ═══════════════════════════════════════════════
+function renderFiltros(){
+  const af=activeFilters();
+  return`<div class="filter-section">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;color:#5f5e5a;text-transform:uppercase;letter-spacing:.3px">Filtros</span>
+      ${af?`<span style="background:#FAEEDA;color:#854F0B;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">${af} activo${af>1?"s":""}</span>
+      <button onclick="clearFilters();render()" class="btn btn-xs">✕ Limpiar</button>`:""}
+      <button onclick="exportProd()" class="btn btn-xs hide-mob" style="margin-left:auto">⬇ CSV</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">
+      <div style="position:relative">
+        <input type="text" placeholder="🔍 Nombre / descripción" value="${esc(S.fSearch)}" oninput="S.fSearch=this.value;render()" style="width:100%;padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px">
       </div>
-      <label class="lbl">Producto</label>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <select onchange="S.mov.productoId=this.value;render()" class="finput" style="flex:1">
-          <option value="">— Seleccionar —</option>
-          ${S.products.map(p=>`<option value="${p.id}"${S.mov.productoId==p.id?" selected":""}>${esc(p.nombre)} (${p.stock} u.)</option>`).join("")}
-        </select>
-        <button onclick="openScanner('movement')" class="btn btn-sm btn-info">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
-        </button>
+      <div>
+        <input type="text" placeholder="# Código de barras" value="${esc(S.fCodigo)}" oninput="S.fCodigo=this.value;render()" style="width:100%;padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;font-family:monospace">
       </div>
-      ${selProd?`<div style="background:#f4f4f2;border-radius:6px;padding:9px 12px;margin-bottom:10px;font-size:12px">
-        <div style="font-weight:700;margin-bottom:2px">${esc(selProd.nombre)}</div>
-        <div style="color:#5f5e5a">📍 ${esc(selProd.ubicacion)} · Prov: ${esc(getProvNombre(selProd.proveedorId))}</div>
-        <div>Cilindradas: ${(selProd.cilindradas||[]).map(cilBadge).join(" ")}</div>
-        <div style="margin-top:4px">Stock: <strong style="font-size:16px">${selProd.stock}</strong> u. ${selProd.stock<=(selProd.stockMin||LOW)?`<span style="color:#A32D2D;font-size:11px">⚠ bajo mínimo (${selProd.stockMin||LOW})</span>`:""}</div>
-      </div>`:""}
-      <label class="lbl">${S.mov.tipo==="ajuste"?"Nuevo total de stock":"Cantidad de unidades"}</label>
-      <input type="number" min="1" value="${S.mov.cantidad||""}" oninput="S.mov.cantidad=this.value" placeholder="${S.mov.tipo==="ajuste"?"ej: 15 → el stock queda en 15":"ej: 10"}" class="finput" style="margin-bottom:10px">
-      <label class="lbl">Nota (opcional)</label>
-      <input type="text" value="${esc(S.mov.nota||"")}" oninput="S.mov.nota=this.value" placeholder="ej: Compra proveedores, inventario físico..." class="finput" style="margin-bottom:12px">
-      ${selProd&&S.mov.cantidad?`<div style="background:${TC[S.mov.tipo][0]};border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:${TC[S.mov.tipo][1]};font-weight:700">
-        Vista previa: ${selProd.stock} → ${S.mov.tipo==="entrada"?selProd.stock+parseInt(S.mov.cantidad||0):S.mov.tipo==="salida"?selProd.stock-parseInt(S.mov.cantidad||0):parseInt(S.mov.cantidad||0)} unidades
-      </div>`:""}
-      <button onclick="registerMov()" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px">${TC[S.mov.tipo][2]} · Registrar</button>
-    </div>
-    <div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
-        <div style="font-size:15px;font-weight:800">Historial de movimientos</div>
-        <button onclick="exportMov()" class="btn btn-sm">⬇ CSV</button>
-      </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr>
-              <th class="no-sort">Fecha</th><th class="no-sort">Tipo</th><th class="no-sort">Producto</th><th class="no-sort">Cant.</th><th class="no-sort">Antes → Después</th><th class="no-sort">Nota</th>
-            </tr></thead>
-            <tbody>
-              ${S.movements.length===0?`<tr><td colspan="6" style="text-align:center;padding:2rem;color:#888780">Sin movimientos aún</td></tr>`:
-                S.movements.slice(0,150).map((m,i)=>{
-                  const t=TC[m.tipo]||["#f4f4f2","#5f5e5a","?"];
-                  return`<tr style="${i%2===1?"background:#fafaf8":""}">
-                    <td style="font-size:10px;color:#5f5e5a;font-family:monospace;white-space:nowrap">${m.fecha}</td>
-                    <td><span style="background:${t[0]};color:${t[1]};border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700">${m.tipo}</span></td>
-                    <td><div style="font-weight:600;font-size:12px">${esc(m.nombre)}</div><div style="font-size:10px;color:#888780;font-family:monospace">${esc(m.codigo)}</div></td>
-                    <td style="font-size:15px;font-weight:800;color:${t[1]}">${m.tipo==="entrada"?"+":m.tipo==="salida"?"-":"="}${m.cantidad}</td>
-                    <td style="font-size:12px;font-family:monospace;white-space:nowrap">${m.antes} → <strong>${m.despues}</strong></td>
-                    <td style="font-size:11px;color:#888780;max-width:130px">${esc(m.nota||"")}</td>
-                  </tr>`;
-                }).join("")}
-            </tbody>
-          </table>
-        </div>
-        ${S.movements.length>0?`<div style="padding:7px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.movements.length} movimiento${S.movements.length!==1?"s":""}</div>`:""}
-      </div>
-    </div>
-  </div>
-</div>`;
-}
-
-// ═══════════════════════════════════════════
-// RENDER — HISTORIAL TAB
-// ═══════════════════════════════════════════
-function renderHistorial(){
-  const styles={"Producto agregado":["#EAF3DE","#3B6D11"],"Producto editado":["#E6F1FB","#185FA5"],"Producto eliminado":["#FCEBEB","#A32D2D"],"↑ Entrada de stock":["#EAF3DE","#3B6D11"],"↓ Salida de stock":["#FCEBEB","#A32D2D"],"⇄ Ajuste de stock":["#E6F1FB","#185FA5"],"Proveedor creado":["#EAF3DE","#0F6E56"],"Proveedor editado":["#E6F1FB","#185FA5"],"Proveedor eliminado":["#FCEBEB","#A32D2D"]};
-  return`
-<div style="max-width:1200px;margin:0 auto;padding:1.25rem">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-size:18px;font-weight:800">Historial de cambios</div>
-      <div style="font-size:13px;color:#888780;margin-top:2px">Todo lo que pasó en el sistema, con fecha y hora</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="const r=[['Fecha','Acción','Detalle'],...S.history.map(h=>[h.fecha,h.accion,h.detalle])].map(r=>r.map(v=>'\"'+String(v||\"\").replace(/\"/g,'\"\"')+'\"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\\uFEFF'+r],{type:'text/csv;charset=utf-8'}));a.download='historial.csv';a.click()" class="btn btn-sm">⬇ CSV</button>
-      <button onclick="if(confirm('¿Limpiar el historial?')){S.history=[];persist();render()}" class="btn btn-sm btn-danger">🗑 Limpiar</button>
-    </div>
-  </div>
-  <div class="card">
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr><th class="no-sort" style="width:145px">Fecha y hora</th><th class="no-sort" style="width:180px">Acción</th><th class="no-sort">Detalle</th></tr></thead>
-        <tbody>
-          ${S.history.length===0?`<tr><td colspan="3" style="text-align:center;padding:2.5rem;color:#888780">Sin cambios registrados aún</td></tr>`:
-            S.history.map((h,i)=>{const s=styles[h.accion]||["#f4f4f2","#5f5e5a"];return`
-            <tr style="${i%2===1?"background:#fafaf8":""}">
-              <td style="font-size:11px;color:#5f5e5a;font-family:monospace;white-space:nowrap">${h.fecha}</td>
-              <td><span style="background:${s[0]};color:${s[1]};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">${esc(h.accion)}</span></td>
-              <td style="font-size:13px">${esc(h.detalle)}</td>
-            </tr>`;}).join("")
-          }
-        </tbody>
-      </table>
-    </div>
-    ${S.history.length>0?`<div style="padding:7px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.history.length} eventos</div>`:""}
-  </div>
-</div>`;
-}
-
-// ═══════════════════════════════════════════
-// RENDER — PROVEEDORES TAB
-// ═══════════════════════════════════════════
-function renderProveedores(){
-  const showForm=S.panelProv==="add"||S.panelProv==="edit";
-  const provForm=showForm?`
-  <div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-color:${S.panelProv==="add"?"#97C459":"#85B7EB"}">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div style="font-size:15px;font-weight:800">${S.panelProv==="add"?"➕ Nuevo proveedor":"✏️ Editar proveedor"}</div>
-      <button onclick="S.panelProv=null;render()" class="btn btn-sm">✕ Cancelar</button>
-    </div>
-    ${renderProvForm("fp-")}
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
-      <button onclick="S.panelProv=null;render()" class="btn">Cancelar</button>
-      <button onclick="saveProv(true)" class="btn btn-primary">${S.panelProv==="add"?"✓ Agregar proveedor":"✓ Guardar cambios"}</button>
-    </div>
-  </div>`:"";
-
-  return`
-<div style="max-width:1200px;margin:0 auto;padding:1.25rem">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-size:18px;font-weight:800">Proveedores</div>
-      <div style="font-size:13px;color:#888780;margin-top:2px">${S.proveedores.length} proveedor${S.proveedores.length!==1?"es":""} registrado${S.proveedores.length!==1?"s":""}</div>
-    </div>
-    ${!showForm?`<button onclick="openProvPanel('add')" class="btn btn-primary">+ Nuevo proveedor</button>`:""}
-  </div>
-
-  ${provForm}
-
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
-    ${S.proveedores.map(p=>{
-      const prods=S.products.filter(x=>x.proveedorId===p.id);
-      return`
-      <div class="card" style="padding:1.1rem">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:.6rem">
-          <div>
-            <div style="font-weight:800;font-size:15px">${esc(p.nombre)}</div>
-            ${p.contacto&&p.contacto!=="—"?`<div style="font-size:12px;color:#5f5e5a;margin-top:1px">👤 ${esc(p.contacto)}</div>`:""}
-          </div>
-          <span style="background:#f4f4f2;color:#5f5e5a;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0">${prods.length} producto${prods.length!==1?"s":""}</span>
-        </div>
-        <div style="font-size:12px;color:#5f5e5a;line-height:1.8;border-top:0.5px solid #e5e4dc;padding-top:.6rem;margin-bottom:.75rem">
-          ${p.telefono&&p.telefono!=="—"?`<div>📞 ${esc(p.telefono)}</div>`:""}
-          ${p.email&&p.email!=="—"?`<div>✉ ${esc(p.email)}</div>`:""}
-          ${p.notas?`<div style="color:#888780;margin-top:3px">💬 ${esc(p.notas)}</div>`:""}
-        </div>
-        ${prods.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:.75rem">
-          ${prods.slice(0,4).map(x=>`<span style="background:#f4f4f2;border-radius:4px;padding:2px 6px;font-size:11px;color:#5f5e5a">${esc(x.nombre.length>25?x.nombre.slice(0,24)+"…":x.nombre)}</span>`).join("")}
-          ${prods.length>4?`<span style="background:#f4f4f2;border-radius:4px;padding:2px 6px;font-size:11px;color:#888780">+${prods.length-4} más</span>`:""}
-        </div>`:""}
-        <div style="display:flex;gap:6px">
-          <button onclick="openProvPanel('edit',${p.id})" class="btn btn-sm btn-info" style="flex:1">Editar</button>
-          <button onclick="deleteProv(${p.id})" class="btn btn-sm btn-danger" style="flex:1">Eliminar</button>
-        </div>
-      </div>`;
-    }).join("")}
-  </div>
-</div>`;
-}
-
-function renderProvForm(pfx){
-  const f=S.formProv;
-  return`
-  <div class="grid2">
-    <div class="col2">
-      <label class="lbl">Nombre del proveedor *</label>
-      <input id="${pfx}nombre" value="${esc(f.nombre||"")}" class="finput">
-    </div>
-    <div>
-      <label class="lbl">Contacto</label>
-      <input id="${pfx}contacto" value="${esc(f.contacto||"")}" placeholder="Nombre del vendedor/representante" class="finput">
-    </div>
-    <div>
-      <label class="lbl">Teléfono</label>
-      <input id="${pfx}telefono" value="${esc(f.telefono||"")}" placeholder="ej: 0261-4101234" class="finput">
-    </div>
-    <div>
-      <label class="lbl">Email</label>
-      <input id="${pfx}email" value="${esc(f.email||"")}" placeholder="ventas@proveedor.com" class="finput">
-    </div>
-    <div class="col2">
-      <label class="lbl">Notas (condiciones de pago, días de entrega, etc.)</label>
-      <input id="${pfx}notas" value="${esc(f.notas||"")}" placeholder="ej: Pago a 30 días, entrega los miércoles" class="finput">
+      <select onchange="S.fCat=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+        <option value="">Todas las categorías</option>
+        ${CATS.map(c=>`<option value="${c}"${S.fCat===c?" selected":""}>${c}</option>`).join("")}
+      </select>
+      <select onchange="S.fTipo=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+        <option value="">Todos los tipos</option>
+        ${TIPOS.map(t=>`<option value="${t}"${S.fTipo===t?" selected":""}>${t}</option>`).join("")}
+      </select>
+      <select onchange="S.fCil=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+        <option value="">Todas las cilindradas</option>
+        ${CILINDS.map(c=>`<option value="${c}"${S.fCil===c?" selected":""}>${c}</option>`).join("")}
+      </select>
+      <select onchange="S.fProv=this.value;render()" style="padding:7px 10px;font-size:12px;border:0.5px solid #b4b2a9;border-radius:6px;background:#fff">
+        <option value="">Todos los proveedores</option>
+        ${S.proveedores.map(p=>`<option value="${p.id}"${S.fProv==p.id?" selected":""}>${esc(p.nombre)}</option>`).join("")}
+      </select>
     </div>
   </div>`;
 }
 
-// ═══════════════════════════════════════════
-// RENDER — MODALS
-// ═══════════════════════════════════════════
-function renderModals(){
-  let html="";
+// ═══════════════════════════════════════════════
+// RENDER — FORM PRODUCTO
+// ═══════════════════════════════════════════════
+function renderProdForm(){
+  const isAdd=S.panel==="add";
+  const f=S.form;
+  return`<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-color:${isAdd?"#97C459":"#85B7EB"}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div style="font-size:15px;font-weight:800">${isAdd?"➕ Nuevo producto":"✏️ Editar producto"}</div>
+      <button onclick="S.panel=null;render()" class="btn btn-sm">✕ Cancelar</button>
+    </div>
+    <div id="prov-ok" style="display:none;background:#EAF3DE;border:0.5px solid #97C459;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#3B6D11;font-weight:600">✓ Proveedor creado y seleccionado</div>
+    <div class="grid2">
+      <div class="col2">
+        <label class="lbl">Código de barras real del producto *</label>
+        <div style="display:flex;gap:6px">
+          <input id="f-codigo" value="${esc(f.codigo||"")}" placeholder="EAN-13, UPC, Code128..." class="finput" style="flex:1;font-family:monospace">
+          <button onclick="openScanner('form-codigo')" class="btn btn-sm btn-info">📷</button>
+        </div>
+        <div style="font-size:11px;color:#888780;margin-top:2px">El código real que leés con la cámara del celular</div>
+      </div>
+      <div class="col2">
+        <label class="lbl">Nombre del producto *</label>
+        <input id="f-nombre" value="${esc(f.nombre||"")}" class="finput">
+      </div>
+      <div>
+        <label class="lbl">Categoría</label>
+        <select id="f-cat" class="finput">
+          ${CATS.map(c=>`<option value="${c}"${(f.categoria||"Frenos")===c?" selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Tipo de producto</label>
+        <select id="f-tipo" class="finput">
+          ${TIPOS.map(t=>`<option value="${t}"${(f.tipo||"Repuesto original")===t?" selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="col2">
+        <label class="lbl">Proveedor *</label>
+        <div style="display:flex;gap:6px">
+          <select id="f-prov" class="finput" style="flex:1">
+            <option value="">— Seleccionar —</option>
+            ${S.proveedores.map(p=>`<option value="${p.id}"${(f.proveedorId&&String(f.proveedorId)===String(p.id))?" selected":""}>${esc(p.nombre)}${p.contacto&&p.contacto!=="—"?" · "+esc(p.contacto):""}</option>`).join("")}
+          </select>
+          <button onclick="openProvInline()" class="btn btn-sm btn-success" style="white-space:nowrap">+ Nuevo</button>
+        </div>
+        <div style="font-size:11px;color:#888780;margin-top:2px">¿No está en la lista? Hacé clic en "+ Nuevo" para crearlo sin salir del formulario</div>
+      </div>
+      <div class="col2">
+        <label class="lbl">Cilindradas compatibles * <span style="color:#888780;font-weight:400">(seleccioná todas las que aplican)</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">
+          ${CILINDS.map(c=>`<button class="pill cil-p${S.formCil.includes(c)?" active":""}" data-c="${c}" onclick="toggleCil('${c}')">${c}</button>`).join("")}
+        </div>
+        ${!S.formCil.length?`<div style="font-size:11px;color:#A32D2D;margin-top:4px">⚠ Seleccioná al menos una</div>`:""}
+      </div>
+      <div>
+        <label class="lbl">Precio de venta (ARS)</label>
+        <input id="f-precio" type="number" min="0" value="${f.precio||""}" class="finput">
+      </div>
+      <div>
+        <label class="lbl">Stock actual</label>
+        <input id="f-stock" type="number" min="0" value="${f.stock||"0"}" class="finput">
+      </div>
+      <div>
+        <label class="lbl">Stock mínimo (alerta)</label>
+        <input id="f-smin" type="number" min="0" value="${f.stockMin||LOW}" class="finput">
+      </div>
+      <div>
+        <label class="lbl">Ubicación (ej: A-1, Gaveta 3)</label>
+        <input id="f-ubic" value="${esc(f.ubicacion||"")}" placeholder="A-1" class="finput">
+      </div>
+      <div class="col2">
+        <label class="lbl">Compatible con / Descripción</label>
+        <input id="f-desc" value="${esc(f.descripcion||"")}" placeholder="ej: Honda CG150, Yamaha YBR125..." class="finput">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem">
+      <button onclick="S.panel=null;render()" class="btn">Cancelar</button>
+      <button onclick="saveProduct()" class="btn btn-primary" style="font-size:14px;padding:9px 22px">${isAdd?"✓ Agregar producto":"✓ Guardar cambios"}</button>
+    </div>
+  </div>`;
+}
 
-  // Delete product
+// ═══════════════════════════════════════════════
+// RENDER — INVENTARIO
+// ═══════════════════════════════════════════════
+function renderInventario(){
+  const fl=filteredProds();
+  const showForm=S.panel==="add"||S.panel==="edit";
+  const ths=[{l:"Código",f:"codigo"},{l:"Producto",f:"nombre"},{l:"Categoría",f:"categoria"},{l:"Tipo",f:"tipo"},{l:"Cilindradas",f:null},{l:"Proveedor",f:"proveedor"},{l:"Precio",f:"precio"},{l:"Stock",f:"stock"},{l:"Ubic.",f:"ubicacion"},{l:"",f:null}];
+  const lowProds=S.products.filter(p=>p.stock<=(p.stockMin||LOW));
+
+  return`<div class="page-pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
+      <div style="font-size:18px;font-weight:800">📦 Inventario</div>
+      ${!showForm?`<button onclick="openAddPanel()" class="btn btn-primary">+ Nuevo producto</button>`:""}
+    </div>
+
+    ${lowProds.length?`<div style="background:#FAEEDA;border:0.5px solid #EF9F27;border-radius:7px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#854F0B;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-weight:700">⚠ Reposición:</span>
+      ${lowProds.slice(0,4).map(p=>`<span onclick="openMovPanel(${p.id})" style="background:#fff;border:0.5px solid #EF9F27;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer">${esc(p.nombre.length>20?p.nombre.slice(0,19)+"…":p.nombre)} <strong>(${p.stock})</strong></span>`).join("")}
+      ${lowProds.length>4?`<span>+${lowProds.length-4} más</span>`:""}
+    </div>`:""}
+
+    ${showForm?renderProdForm():""}
+    ${renderFiltros()}
+
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            ${ths.map(th=>`<th class="${th.f?"":"ns"}" ${th.f?`onclick="S.sortField==='${th.f}'?(S.sortDir=S.sortDir==='asc'?'desc':'asc'):(S.sortField='${th.f}',S.sortDir='asc');render()"`:""}>
+              ${th.l}${th.f?sortArrow(th.f):""}
+            </th>`).join("")}
+          </tr></thead>
+          <tbody>
+            ${fl.length===0?`<tr><td colspan="10" class="empty-state">Sin resultados para los filtros seleccionados</td></tr>`:
+              fl.map((p,i)=>`<tr id="row-${p.id}" style="${i%2===1?"background:#fafaf9":""};${S.highlight===p.id?"outline:2px solid #378add;background:#E6F1FB!important":""}">
+                <td style="font-family:monospace;font-size:11px;color:#5f5e5a;white-space:nowrap">${esc(p.codigo)}</td>
+                <td style="min-width:150px">
+                  <div style="font-weight:700;font-size:13px">${esc(p.nombre)}</div>
+                  <div style="font-size:11px;color:#888780">${esc(p.descripcion||"")}</div>
+                </td>
+                <td>${catBadge(p.categoria)}</td>
+                <td>${tipoBadge(p.tipo||"")}</td>
+                <td style="min-width:110px"><div style="display:flex;flex-wrap:wrap;gap:2px">${(p.cilindradas||[]).map(cilBadge).join("")}</div></td>
+                <td style="font-size:12px;white-space:nowrap;color:#5f5e5a">${esc(getProvNombre(p.proveedorId))}</td>
+                <td style="font-weight:700;white-space:nowrap">$${fmt(p.precio)}</td>
+                <td>${stockBadge(p.stock,p.stockMin||0)}</td>
+                <td style="font-family:monospace;font-size:11px;color:#5f5e5a;white-space:nowrap">${esc(p.ubicacion)}</td>
+                <td style="white-space:nowrap">
+                  <div style="display:flex;gap:3px">
+                    <button onclick="openMovPanel(${p.id})" class="btn btn-xs btn-success">±</button>
+                    <button onclick="openEditPanel(${p.id})" class="btn btn-xs btn-info">Editar</button>
+                    <button onclick="S.deleteId=${p.id};S.panel='delete';render()" class="btn btn-xs btn-danger">✕</button>
+                  </div>
+                </td>
+              </tr>`).join("")
+            }
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:7px 14px;font-size:12px;color:#888780;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:0.5px solid #e5e4dc">
+        <span>${fl.length} de ${S.products.length} productos</span>
+        <span style="color:#3B6D11">✓ Guardado automáticamente</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — MOVIMIENTOS (mobile-responsive)
+// ═══════════════════════════════════════════════
+function renderMovimientos(){
+  const selProd=S.products.find(p=>p.id===parseInt(S.mov.productoId));
+  const TC={entrada:["#EAF3DE","#3B6D11","↑ Entrada"],salida:["#FCEBEB","#A32D2D","↓ Salida"],ajuste:["#E6F1FB","#185FA5","⇄ Ajuste"]};
+
+  // Mobile cards for history
+  const movCards=S.movements.slice(0,100).map((m,i)=>{
+    const t=TC[m.tipo]||["#f4f4f2","#5f5e5a","?"];
+    return`<div class="mov-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.nombre)}</div>
+          <div style="font-size:10px;color:#888780;font-family:monospace">${esc(m.codigo)}</div>
+        </div>
+        <span style="background:${t[0]};color:${t[1]};border-radius:5px;padding:2px 9px;font-size:13px;font-weight:800;flex-shrink:0">${m.tipo==="entrada"?"+":m.tipo==="salida"?"-":"="}${m.cantidad}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+        <span style="background:${t[0]};color:${t[1]};border-radius:3px;padding:1px 6px;font-size:11px;font-weight:600">${m.tipo}</span>
+        <span style="font-size:12px;font-family:monospace;color:#5f5e5a">${m.antes} → <strong>${m.despues}</strong></span>
+        <span style="font-size:11px;color:#888780">${m.fecha}</span>
+      </div>
+      ${m.nota?`<div style="font-size:12px;color:#888780;margin-top:4px;padding-top:4px;border-top:0.5px solid #f2f1ef">💬 ${esc(m.nota)}</div>`:""}
+    </div>`;
+  }).join("");
+
+  return`<div class="page-pad">
+    <div style="font-size:18px;font-weight:800;margin-bottom:1.25rem">↕ Movimientos de stock</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:1.25rem;align-items:start" class="grid2" id="mov-grid">
+
+      <!-- Form -->
+      <div class="card" style="padding:1.25rem">
+        <div style="font-size:14px;font-weight:700;margin-bottom:1rem">Registrar movimiento</div>
+        <div id="mov-ok" style="display:none;background:#EAF3DE;border:0.5px solid #97C459;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#3B6D11;font-weight:600">✓ Registrado</div>
+
+        <div style="display:flex;gap:5px;margin-bottom:12px">
+          ${["entrada","salida","ajuste"].map(t=>`<button onclick="S.mov.tipo='${t}';render()" style="flex:1;padding:7px 4px;border-radius:6px;font-size:12px;font-weight:${S.mov.tipo===t?"700":"400"};cursor:pointer;border:${S.mov.tipo===t?"2px":"0.5px"} solid ${TC[t][1]};background:${S.mov.tipo===t?TC[t][0]:"#fff"};color:${TC[t][1]}">${TC[t][2]}</button>`).join("")}
+        </div>
+
+        <label class="lbl">Producto</label>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <select onchange="S.mov.productoId=this.value;render()" class="finput" style="flex:1">
+            <option value="">— Seleccionar —</option>
+            ${S.products.map(p=>`<option value="${p.id}"${S.mov.productoId==p.id?" selected":""}>${esc(p.nombre)} (${p.stock} u.)</option>`).join("")}
+          </select>
+          <button onclick="openScanner('movement')" class="btn btn-sm btn-info">📷</button>
+        </div>
+
+        ${selProd?`<div style="background:#f2f1ef;border-radius:6px;padding:9px 12px;margin-bottom:10px;font-size:12px">
+          <div style="font-weight:700;margin-bottom:2px">${esc(selProd.nombre)}</div>
+          <div style="color:#5f5e5a">📍 ${esc(selProd.ubicacion)} · ${esc(getProvNombre(selProd.proveedorId))}</div>
+          <div style="margin-top:2px">Cil: ${(selProd.cilindradas||[]).map(cilBadge).join(" ")}</div>
+          <div style="margin-top:4px">Stock: <strong style="font-size:16px">${selProd.stock}</strong> u. ${selProd.stock<=(selProd.stockMin||LOW)?`<span style="color:#A32D2D;font-size:11px">⚠ bajo mínimo</span>`:""}</div>
+        </div>`:""}
+
+        <label class="lbl">${S.mov.tipo==="ajuste"?"Nuevo total de stock":"Cantidad de unidades"}</label>
+        <input type="number" min="1" value="${S.mov.cantidad||""}" oninput="S.mov.cantidad=this.value" class="finput" style="margin-bottom:10px">
+
+        <label class="lbl">Nota (opcional)</label>
+        <input type="text" value="${esc(S.mov.nota||"")}" oninput="S.mov.nota=this.value" placeholder="ej: compra a proveedor, venta mostrador..." class="finput" style="margin-bottom:12px">
+
+        ${selProd&&S.mov.cantidad?`<div style="background:${TC[S.mov.tipo][0]};border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:${TC[S.mov.tipo][1]};font-weight:700">
+          ${selProd.stock} → ${S.mov.tipo==="entrada"?selProd.stock+parseInt(S.mov.cantidad||0):S.mov.tipo==="salida"?selProd.stock-parseInt(S.mov.cantidad||0):parseInt(S.mov.cantidad||0)} unidades
+        </div>`:""}
+
+        <button onclick="registerMov()" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px">${TC[S.mov.tipo][2]} · Registrar</button>
+      </div>
+
+      <!-- Historial -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+          <div style="font-size:14px;font-weight:700">Historial de movimientos</div>
+          <button onclick="exportMov()" class="btn btn-sm">⬇ CSV</button>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="card desktop-tbl">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th class="ns">Fecha</th><th class="ns">Tipo</th><th class="ns">Producto</th>
+                <th class="ns">Cant.</th><th class="ns">Antes→Después</th><th class="ns">Nota</th>
+              </tr></thead>
+              <tbody>
+                ${S.movements.length===0?`<tr><td colspan="6" class="empty-state">Sin movimientos aún</td></tr>`:
+                  S.movements.slice(0,100).map((m,i)=>{
+                    const t=TC[m.tipo]||["#f4f4f2","#5f5e5a","?"];
+                    return`<tr style="${i%2===1?"background:#fafaf9":""}">
+                      <td style="font-size:11px;color:#5f5e5a;font-family:monospace;white-space:nowrap">${m.fecha}</td>
+                      <td><span style="background:${t[0]};color:${t[1]};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">${m.tipo}</span></td>
+                      <td style="min-width:130px">
+                        <div style="font-weight:600;font-size:12px">${esc(m.nombre)}</div>
+                        <div style="font-size:10px;color:#888780;font-family:monospace">${esc(m.codigo)}</div>
+                      </td>
+                      <td style="font-size:15px;font-weight:800;color:${t[1]}">${m.tipo==="entrada"?"+":m.tipo==="salida"?"-":"="}${m.cantidad}</td>
+                      <td style="font-size:12px;font-family:monospace;white-space:nowrap">${m.antes}→<strong>${m.despues}</strong></td>
+                      <td style="font-size:11px;color:#888780;max-width:120px">${esc(m.nota||"")}</td>
+                    </tr>`;
+                  }).join("")
+                }
+              </tbody>
+            </table>
+          </div>
+          ${S.movements.length>0?`<div style="padding:7px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.movements.length} movimiento${S.movements.length!==1?"s":""}</div>`:""}
+        </div>
+
+        <!-- Mobile cards -->
+        <div class="mobile-cards">
+          ${S.movements.length===0?`<div class="card" style="padding:2rem"><div class="empty-state">Sin movimientos aún</div></div>`:movCards}
+          ${S.movements.length>0?`<div style="font-size:12px;color:#888780;text-align:center;padding:8px">${S.movements.length} movimientos totales</div>`:""}
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — HISTORIAL
+// ═══════════════════════════════════════════════
+function renderHistorial(){
+  const styles={"Producto agregado":["#EAF3DE","#3B6D11"],"Producto editado":["#E6F1FB","#185FA5"],"Producto eliminado":["#FCEBEB","#A32D2D"],"↑ Entrada de stock":["#EAF3DE","#3B6D11"],"↓ Salida de stock":["#FCEBEB","#A32D2D"],"⇄ Ajuste de stock":["#E6F1FB","#185FA5"],"Proveedor creado":["#EAF3DE","#0F6E56"],"Proveedor editado":["#E6F1FB","#185FA5"],"Proveedor eliminado":["#FCEBEB","#A32D2D"]};
+  const histCards=S.history.map((h,i)=>{const s=styles[h.accion]||["#f4f4f2","#5f5e5a"];return`
+    <div class="mov-card">
+      <div style="display:flex;align-items:flex-start;gap:8px;justify-content:space-between">
+        <span style="background:${s[0]};color:${s[1]};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;flex-shrink:0">${esc(h.accion)}</span>
+        <span style="font-size:10px;color:#888780;font-family:monospace;flex-shrink:0">${h.fecha}</span>
+      </div>
+      <div style="font-size:13px;margin-top:6px;color:#1a1a18">${esc(h.detalle)}</div>
+    </div>`;}).join("");
+  return`<div class="page-pad">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:18px;font-weight:800">📋 Historial de cambios</div>
+        <div style="font-size:13px;color:#888780;margin-top:2px">Todo lo que pasó en el sistema</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="const r=[['Fecha','Acción','Detalle'],...S.history.map(h=>[h.fecha,h.accion,h.detalle])].map(r=>r.map(v=>'\"'+String(v||\"\").replace(/\"/g,'\"\"')+'\"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\\uFEFF'+r],{type:'text/csv;charset=utf-8'}));a.download='historial.csv';a.click()" class="btn btn-sm">⬇ CSV</button>
+        <button onclick="if(confirm('¿Limpiar historial?')){S.history=[];persist();render()}" class="btn btn-sm btn-danger">🗑</button>
+      </div>
+    </div>
+
+    <!-- Desktop -->
+    <div class="card desktop-tbl">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="ns" style="width:145px">Fecha</th><th class="ns" style="width:190px">Acción</th><th class="ns">Detalle</th></tr></thead>
+          <tbody>
+            ${S.history.length===0?`<tr><td colspan="3" class="empty-state">Sin cambios aún</td></tr>`:
+              S.history.map((h,i)=>{const s=styles[h.accion]||["#f4f4f2","#5f5e5a"];return`
+              <tr style="${i%2===1?"background:#fafaf9":""}">
+                <td style="font-size:11px;color:#5f5e5a;font-family:monospace;white-space:nowrap">${h.fecha}</td>
+                <td><span style="background:${s[0]};color:${s[1]};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(h.accion)}</span></td>
+                <td style="font-size:13px">${esc(h.detalle)}</td>
+              </tr>`;}).join("")
+            }
+          </tbody>
+        </table>
+      </div>
+      ${S.history.length>0?`<div style="padding:7px 14px;font-size:12px;color:#888780;border-top:0.5px solid #e5e4dc">${S.history.length} eventos</div>`:""}
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-cards">
+      ${S.history.length===0?`<div class="card" style="padding:2rem"><div class="empty-state">Sin historial aún</div></div>`:histCards}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — PROVEEDORES
+// ═══════════════════════════════════════════════
+function renderProveedores(){
+  const showForm=S.panelProv==="add"||S.panelProv==="edit";
+  return`<div class="page-pad">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:18px;font-weight:800">🏪 Proveedores</div>
+        <div style="font-size:13px;color:#888780;margin-top:2px">${S.proveedores.length} registrados</div>
+      </div>
+      ${!showForm?`<button onclick="openProvPanel('add')" class="btn btn-primary">+ Nuevo proveedor</button>`:""}
+    </div>
+
+    ${showForm?`<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-color:${S.panelProv==="add"?"#97C459":"#85B7EB"}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:15px;font-weight:800">${S.panelProv==="add"?"➕ Nuevo proveedor":"✏️ Editar proveedor"}</div>
+        <button onclick="S.panelProv=null;render()" class="btn btn-sm">✕</button>
+      </div>
+      <div class="grid2">
+        <div class="col2"><label class="lbl">Nombre *</label><input id="fp-nombre" value="${esc(S.formProv.nombre||"")}" class="finput"></div>
+        <div><label class="lbl">Contacto</label><input id="fp-contacto" value="${esc(S.formProv.contacto||"")}" placeholder="Nombre del vendedor" class="finput"></div>
+        <div><label class="lbl">Teléfono</label><input id="fp-tel" value="${esc(S.formProv.telefono||"")}" placeholder="0261-4101234" class="finput"></div>
+        <div><label class="lbl">Email</label><input id="fp-email" value="${esc(S.formProv.email||"")}" class="finput"></div>
+        <div class="col2"><label class="lbl">Notas (pago, entrega, etc.)</label><input id="fp-notas" value="${esc(S.formProv.notas||"")}" placeholder="ej: pago a 30 días, entrega los miércoles" class="finput"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
+        <button onclick="S.panelProv=null;render()" class="btn">Cancelar</button>
+        <button onclick="saveProv()" class="btn btn-primary">${S.panelProv==="add"?"✓ Agregar":"✓ Guardar"}</button>
+      </div>
+    </div>`:""}
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem">
+      ${S.proveedores.map(p=>{
+        const prods=S.products.filter(x=>x.proveedorId===p.id);
+        const lowP=prods.filter(x=>x.stock<=(x.stockMin||LOW)).length;
+        return`<div class="card" style="padding:1.1rem">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:.6rem">
+            <div style="font-weight:800;font-size:15px;flex:1">${esc(p.nombre)}</div>
+            <span style="background:#f2f1ef;color:#5f5e5a;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:700;flex-shrink:0">${prods.length} prod.</span>
+          </div>
+          <div style="font-size:12px;color:#5f5e5a;line-height:1.9;border-top:0.5px solid #e5e4dc;padding-top:.6rem;margin-bottom:.75rem">
+            ${p.contacto&&p.contacto!=="—"?`<div>👤 ${esc(p.contacto)}</div>`:""}
+            ${p.telefono&&p.telefono!=="—"?`<div>📞 ${esc(p.telefono)}</div>`:""}
+            ${p.email&&p.email!=="—"?`<div>✉ ${esc(p.email)}</div>`:""}
+            ${p.notas?`<div style="color:#888780">💬 ${esc(p.notas)}</div>`:""}
+          </div>
+          ${lowP?`<div style="background:#FAEEDA;border-radius:5px;padding:4px 10px;font-size:12px;color:#854F0B;margin-bottom:8px;font-weight:600">⚠ ${lowP} producto${lowP>1?"s":""} con stock bajo</div>`:""}
+          ${prods.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:.75rem">
+            ${prods.slice(0,3).map(x=>`<span style="background:#f2f1ef;border-radius:4px;padding:2px 6px;font-size:11px;color:#5f5e5a">${esc(x.nombre.length>22?x.nombre.slice(0,21)+"…":x.nombre)}</span>`).join("")}
+            ${prods.length>3?`<span style="background:#f2f1ef;border-radius:4px;padding:2px 6px;font-size:11px;color:#888780">+${prods.length-3}</span>`:""}
+          </div>`:""}
+          <div style="display:flex;gap:6px">
+            <button onclick="openProvPanel('edit',${p.id})" class="btn btn-sm btn-info" style="flex:1">Editar</button>
+            <button onclick="deleteProv(${p.id})" class="btn btn-sm btn-danger" style="flex:1">Eliminar</button>
+          </div>
+        </div>`;}).join("")}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER — MODALS
+// ═══════════════════════════════════════════════
+function renderModals(){
+  let h="";
+
   if(S.panel==="delete"){
     const p=S.products.find(x=>x.id===S.deleteId);
-    html+=`<div class="modal-overlay" onclick="if(event.target===this){S.panel=null;render()}">
-      <div class="modal-box modal-box-sm">
+    h+=`<div class="modal-overlay" onclick="if(event.target===this){S.panel=null;render()}">
+      <div class="modal-box" style="max-width:380px">
         <div style="font-size:16px;font-weight:800;margin-bottom:.5rem">Eliminar producto</div>
-        <p style="color:#5f5e5a;font-size:14px;margin-bottom:1.25rem">¿Eliminar <strong>"${esc(p?p.nombre:"")}"</strong>?<br><span style="color:#A32D2D">Esta acción no se puede deshacer.</span></p>
+        <p style="color:#5f5e5a;font-size:14px;margin-bottom:1.25rem">¿Eliminar <strong>"${esc(p?p.nombre:"")}"</strong>?<br><span style="color:#A32D2D">No se puede deshacer.</span></p>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button onclick="S.panel=null;render()" class="btn">Cancelar</button>
           <button onclick="confirmDelete()" class="btn btn-danger">✕ Eliminar</button>
@@ -881,62 +1056,67 @@ function renderModals(){
     </div>`;
   }
 
-  // Add proveedor inline (desde form de producto)
-  if(S.panel==="add-prov-inline"){
-    html+=`<div class="modal-overlay">
+  if(S.panel==="prov-inline"){
+    h+=`<div class="modal-overlay">
       <div class="modal-box">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.25rem">
-          <div style="font-size:16px;font-weight:800">➕ Nuevo proveedor</div>
-        </div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:.25rem">➕ Nuevo proveedor</div>
         <div style="background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:6px;padding:8px 12px;margin-bottom:1rem;font-size:12px;color:#185FA5">
-          Completá los datos del proveedor. Una vez creado, vas a poder continuar cargando el producto sin perder lo que ya escribiste.
+          Creá el proveedor y vas a volver al formulario del producto sin perder lo que escribiste.
         </div>
-        ${renderProvForm("fp-")}
+        <div class="grid2">
+          <div class="col2"><label class="lbl">Nombre del proveedor *</label><input id="fpi-nombre" value="${esc(S.formProv.nombre||"")}" class="finput" autofocus></div>
+          <div><label class="lbl">Contacto</label><input id="fpi-contacto" value="" placeholder="Nombre del vendedor" class="finput"></div>
+          <div><label class="lbl">Teléfono</label><input id="fpi-tel" value="" placeholder="0261-..." class="finput"></div>
+          <div><label class="lbl">Email</label><input id="fpi-email" value="" class="finput"></div>
+          <div class="col2"><label class="lbl">Notas</label><input id="fpi-notas" value="" placeholder="ej: pago a 30 días" class="finput"></div>
+        </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem">
-          <button onclick="S.panel='add';S.provInlineCallback=null;render()" class="btn">Cancelar</button>
-          <button onclick="saveProvInline()" class="btn btn-primary">✓ Crear proveedor y continuar</button>
+          <button onclick="S.panel='add';S.provInline=false;render()" class="btn">← Volver al producto</button>
+          <button onclick="saveProvInline()" class="btn btn-primary">✓ Crear y continuar</button>
         </div>
       </div>
     </div>`;
   }
 
-  // Scanner
   if(S.panel==="scanner"){
-    const msgs={"search":"Apuntá al código de barras del producto para buscarlo","form-codigo":"Escaneá el código real del producto","movement":"Escaneá para seleccionar el producto"};
-    html+=`<div class="modal-overlay">
+    const msgs={"search":"Buscá el producto escaneando su código de barras","form-codigo":"Escaneá el código real del producto","movement":"Escaneá para seleccionar el producto en movimientos"};
+    h+=`<div class="modal-overlay">
       <div class="modal-box" style="text-align:center">
         <div style="font-size:16px;font-weight:800;margin-bottom:.4rem">📷 Lector de código de barras</div>
-        <p style="font-size:13px;color:#5f5e5a;margin-bottom:.75rem">${msgs[S.scanCtx]||"Apuntá al código"}</p>
-        <div id="qr-viewport" style="width:100%;border-radius:8px;overflow:hidden;background:#111;min-height:220px"></div>
-        <p style="font-size:11px;color:#888780;margin-top:.5rem">Soporta EAN-13, EAN-8, UPC, Code128, Code39, QR y más</p>
-        <div style="background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-top:.6rem;font-size:12px;color:#854F0B;text-align:left">
-          💡 <strong>Requiere HTTPS.</strong> En GitHub Pages funciona perfecto. Desde <code>file://</code> local puede fallar en Chrome/Android.
+        <p style="font-size:13px;color:#5f5e5a;margin-bottom:.75rem">${msgs[S.scanCtx]||""}</p>
+        <div id="qr-vp" style="width:100%;border-radius:8px;overflow:hidden;background:#111;min-height:220px"></div>
+        <p style="font-size:11px;color:#888780;margin:.5rem 0">EAN-13 · EAN-8 · UPC · Code128 · Code39 · QR</p>
+        <div style="background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-bottom:.75rem;font-size:12px;color:#854F0B;text-align:left">
+          💡 <strong>Requiere HTTPS.</strong> En GitHub Pages funciona perfecto. Desde <code>file://</code> la cámara puede bloquearse.
         </div>
-        <button onclick="stopScanner()" class="btn btn-danger" style="margin-top:.75rem;width:100%;padding:10px;font-size:14px">Cancelar escaneo</button>
+        <button onclick="stopScanner()" class="btn btn-danger" style="width:100%;padding:10px;font-size:14px">Cancelar</button>
       </div>
     </div>`;
   }
 
-  return html;
+  return h;
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // MAIN RENDER
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function render(){
   const root=document.getElementById("root");
   if(!root)return;
-  let tab="";
-  if(S.tab==="inventario")tab=renderInventario();
-  else if(S.tab==="movimientos")tab=renderMovimientos();
-  else if(S.tab==="historial")tab=renderHistorial();
-  else if(S.tab==="proveedores")tab=renderProveedores();
-  root.innerHTML=renderHeader()+tab+renderModals();
+  let screen="";
+  if(S.tab==="dashboard")screen=renderDashboard();
+  else if(S.tab==="inventario")screen=renderInventario();
+  else if(S.tab==="movimientos")screen=renderMovimientos();
+  else if(S.tab==="historial")screen=renderHistorial();
+  else if(S.tab==="proveedores")screen=renderProveedores();
+  root.innerHTML=`
+    ${renderSidebar()}
+    <div id="content">${screen}</div>
+    ${renderBottomNav()}
+    ${renderModals()}
+  `;
 }
 
-// ═══════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════
 hydrate();
 render();
 </script>
